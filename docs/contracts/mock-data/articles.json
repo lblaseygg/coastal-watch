@@ -1,0 +1,86 @@
+{
+  "schema_version": "phase0-v1",
+  "note": "Illustrative sample records only. They are fictional examples for contract validation.",
+  "items": [
+    {
+      "id": "art_001",
+      "url": "https://example.org/news/rincon-access-path",
+      "publisher": "Example Coastal News",
+      "title": "Sample: Community raises concern about access path near the coast",
+      "published_at": "2026-03-02T12:00:00Z",
+      "accessed_at": "2026-03-02T13:05:00Z",
+      "language": "es",
+      "fetch_status": "cleaned",
+      "content_hash": "sha256:sample-art-001",
+      "cleaned_text": "Community members described intermittent blockage near a coastal access path and asked local agencies for clarification.",
+      "linked_case_ids": [
+        "case_rincon_access_path"
+      ],
+      "created_at": "2026-03-02T13:05:00Z"
+    },
+    {
+      "id": "art_002",
+      "url": "https://example.org/news/rincon-follow-up",
+      "publisher": "Island Public Monitor",
+      "title": "Sample: Local response follows reports about coastal path access",
+      "published_at": "2026-04-10T14:00:00Z",
+      "accessed_at": "2026-04-10T14:20:00Z",
+      "language": "es",
+      "fetch_status": "cleaned",
+      "content_hash": "sha256:sample-art-002",
+      "cleaned_text": "A follow-up report described agency outreach and additional community feedback regarding access conditions.",
+      "linked_case_ids": [
+        "case_rincon_access_path"
+      ],
+      "created_at": "2026-04-10T14:20:00Z"
+    },
+    {
+      "id": "art_003",
+      "url": "https://example.org/news/aguadilla-shoreline-project",
+      "publisher": "Example Business Journal",
+      "title": "Sample: Shoreline development proposal in Aguadilla moves through filings",
+      "published_at": "2026-02-17T10:30:00Z",
+      "accessed_at": "2026-02-17T11:10:00Z",
+      "language": "es",
+      "fetch_status": "cleaned",
+      "content_hash": "sha256:sample-art-003",
+      "cleaned_text": "The article described a shoreline project proposal and summarized current filing and review milestones.",
+      "linked_case_ids": [
+        "case_aguadilla_shoreline_project"
+      ],
+      "created_at": "2026-02-17T11:10:00Z"
+    },
+    {
+      "id": "art_004",
+      "url": "https://example.org/news/loiza-erosion-response",
+      "publisher": "Example Environmental Desk",
+      "title": "Sample: Loiza shoreline erosion response remains under discussion",
+      "published_at": "2026-01-25T09:00:00Z",
+      "accessed_at": "2026-01-25T09:40:00Z",
+      "language": "es",
+      "fetch_status": "cleaned",
+      "content_hash": "sha256:sample-art-004",
+      "cleaned_text": "The article covered erosion impacts and described proposals for response measures without confirming a final construction decision.",
+      "linked_case_ids": [
+        "case_loiza_erosion_barrier"
+      ],
+      "created_at": "2026-01-25T09:40:00Z"
+    },
+    {
+      "id": "art_005",
+      "url": "https://example.org/news/salinas-permitting-notice",
+      "publisher": "Example Island Ledger",
+      "title": "Sample: Salinas permitting notice raises questions under review",
+      "published_at": "2026-04-13T16:45:00Z",
+      "accessed_at": "2026-04-13T17:05:00Z",
+      "language": "es",
+      "fetch_status": "cleaned",
+      "content_hash": "sha256:sample-art-005",
+      "cleaned_text": "The article references an unresolved permitting dispute and contains language that requires human review before publication.",
+      "linked_case_ids": [
+        "case_salinas_permitting_notice"
+      ],
+      "created_at": "2026-04-13T17:05:00Z"
+    }
+  ]
+}
