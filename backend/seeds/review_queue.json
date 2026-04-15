@@ -1,0 +1,51 @@
+{
+  "schema_version": "phase0-v1",
+  "items": [
+    {
+      "id": "rev_001",
+      "entity_type": "article_extraction",
+      "entity_id": "ext_003",
+      "status": "approved",
+      "reason_codes": ["policy_or_permitting"],
+      "editable_fields": ["extracted_summary", "claims"],
+      "assigned_to": "admin_demo",
+      "decision_notes": "Approved after trimming speculative wording from the summary.",
+      "audit_events": [
+        {
+          "action": "created",
+          "actor_id": "system",
+          "at": "2026-02-17T11:12:00Z",
+          "note": "Queued due to permitting-related language."
+        },
+        {
+          "action": "approved",
+          "actor_id": "admin_demo",
+          "at": "2026-02-17T13:00:00Z",
+          "note": "Summary adjusted for neutrality."
+        }
+      ],
+      "created_at": "2026-02-17T11:12:00Z",
+      "updated_at": "2026-02-17T13:00:00Z"
+    },
+    {
+      "id": "rev_002",
+      "entity_type": "article_extraction",
+      "entity_id": "ext_005",
+      "status": "pending_review",
+      "reason_codes": ["legal_claim", "unclear_location"],
+      "editable_fields": ["extracted_summary", "claims", "municipality_ids"],
+      "assigned_to": null,
+      "decision_notes": null,
+      "audit_events": [
+        {
+          "action": "created",
+          "actor_id": "system",
+          "at": "2026-04-13T17:07:00Z",
+          "note": "Queued because the extraction includes a legal-claim flag and low-confidence location match."
+        }
+      ],
+      "created_at": "2026-04-13T17:07:00Z",
+      "updated_at": "2026-04-13T17:07:00Z"
+    }
+  ]
+}

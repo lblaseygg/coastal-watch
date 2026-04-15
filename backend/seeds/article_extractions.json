@@ -1,0 +1,115 @@
+{
+  "schema_version": "phase0-v1",
+  "items": [
+    {
+      "id": "ext_001",
+      "article_id": "art_001",
+      "schema_version": "phase0-v1",
+      "relevance": "relevant",
+      "confidence_score": 0.91,
+      "extracted_case_title": "Sample: Rincon access path concern",
+      "extracted_summary": "Article reports intermittent obstruction near a coastal access path and ongoing community concern.",
+      "category": "access_restriction",
+      "municipality_ids": ["rincon"],
+      "claims": [
+        {
+          "text": "Residents reported intermittent obstruction near a coastal access path.",
+          "evidence_snippet": "Community members said the path had been blocked on multiple weekends.",
+          "sensitive": false
+        }
+      ],
+      "sensitive_flags": [],
+      "needs_review": false,
+      "model_name": "gpt-5.4",
+      "created_at": "2026-03-02T13:06:00Z"
+    },
+    {
+      "id": "ext_002",
+      "article_id": "art_002",
+      "schema_version": "phase0-v1",
+      "relevance": "relevant",
+      "confidence_score": 0.84,
+      "extracted_case_title": "Sample: Rincon access path concern",
+      "extracted_summary": "Follow-up reporting notes outreach and status updates related to a previously reported access concern.",
+      "category": "access_restriction",
+      "municipality_ids": ["rincon"],
+      "claims": [
+        {
+          "text": "A follow-up report described agency outreach regarding the access concern.",
+          "evidence_snippet": "The report said local officials met with residents to discuss the issue.",
+          "sensitive": false
+        }
+      ],
+      "sensitive_flags": [],
+      "needs_review": false,
+      "model_name": "gpt-5.4",
+      "created_at": "2026-04-10T14:21:00Z"
+    },
+    {
+      "id": "ext_003",
+      "article_id": "art_003",
+      "schema_version": "phase0-v1",
+      "relevance": "relevant",
+      "confidence_score": 0.79,
+      "extracted_case_title": "Sample: Aguadilla shoreline project update",
+      "extracted_summary": "Article summarizes a shoreline development proposal and current filing milestones.",
+      "category": "development",
+      "municipality_ids": ["aguadilla"],
+      "claims": [
+        {
+          "text": "The article describes a shoreline development proposal moving through filings.",
+          "evidence_snippet": "Coverage summarized the current filing milestones for the project.",
+          "sensitive": false
+        }
+      ],
+      "sensitive_flags": ["policy_or_permitting"],
+      "needs_review": true,
+      "model_name": "gpt-5.4",
+      "created_at": "2026-02-17T11:11:00Z"
+    },
+    {
+      "id": "ext_004",
+      "article_id": "art_004",
+      "schema_version": "phase0-v1",
+      "relevance": "relevant",
+      "confidence_score": 0.88,
+      "extracted_case_title": "Sample: Loiza shoreline erosion response",
+      "extracted_summary": "Article reports erosion impacts and discusses response measures under consideration.",
+      "category": "environmental_concern",
+      "municipality_ids": ["loiza"],
+      "claims": [
+        {
+          "text": "The article describes shoreline erosion impacts and response measures under discussion.",
+          "evidence_snippet": "The report said coastal erosion had prompted discussion of response options.",
+          "sensitive": false
+        }
+      ],
+      "sensitive_flags": [],
+      "needs_review": false,
+      "model_name": "gpt-5.4",
+      "created_at": "2026-01-25T09:41:00Z"
+    },
+    {
+      "id": "ext_005",
+      "article_id": "art_005",
+      "schema_version": "phase0-v1",
+      "relevance": "unclear",
+      "confidence_score": 0.58,
+      "extracted_case_title": "Sample: Salinas permitting notice under review",
+      "extracted_summary": "Article references an unresolved permitting dispute and includes language that should be reviewed before publication.",
+      "category": "policy_or_permitting",
+      "municipality_ids": ["salinas"],
+      "claims": [
+        {
+          "text": "The article references an unresolved permitting dispute.",
+          "evidence_snippet": "The report said the permitting issue remained unresolved at publication time.",
+          "sensitive": true
+        }
+      ],
+      "sensitive_flags": ["legal_claim", "unclear_location"],
+      "needs_review": true,
+      "model_name": "gpt-5.4",
+      "created_at": "2026-04-13T17:06:00Z"
+    }
+  ]
+}
