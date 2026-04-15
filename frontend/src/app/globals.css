@@ -3,18 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f4ead5;
-  --bg-deep: #dcebee;
-  --panel: rgba(255, 252, 247, 0.82);
-  --panel-strong: rgba(255, 252, 247, 0.94);
-  --ink: #10252b;
-  --muted: #49626b;
-  --line: rgba(16, 37, 43, 0.12);
-  --tide: #0d5f73;
-  --coral: #f16d5b;
-  --kelp: #29584a;
-  --shadow: 0 24px 60px rgba(16, 37, 43, 0.14);
-  --radius-xl: 28px;
+  --bg: #f7f7f5;
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-strong: #ffffff;
+  --ink: #37352f;
+  --muted: #6f6e69;
+  --line: #e7e5e4;
+  --tide: #2f3437;
+  --soft: #f1f1ef;
+  --soft-strong: #ebebe8;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --radius-xl: 20px;
 }
 
 * {
@@ -23,19 +22,20 @@
 
 html {
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(241, 109, 91, 0.18), transparent 26%),
-    radial-gradient(circle at right 20%, rgba(13, 95, 115, 0.14), transparent 24%),
-    linear-gradient(180deg, var(--bg) 0%, #f7f0e4 42%, var(--bg-deep) 100%);
+  background: var(--bg);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
-  background-image: radial-gradient(rgba(16, 37, 43, 0.03) 1px, transparent 1px);
-  background-size: 14px 14px;
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: var(--bg);
 }
 
 a {
@@ -51,7 +51,7 @@ select {
 
 .page-shell {
   min-height: 100vh;
-  padding: 32px 20px 48px;
+  padding: 24px 20px 40px;
 }
 
 .panel {
@@ -59,24 +59,96 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
 }
 
-.leaflet-container {
+.municipality-svg-shell {
+  border: 1px solid var(--line);
+  background: #fbfbfa;
+}
+
+.municipality-svg-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(55, 53, 47, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(55, 53, 47, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.municipality-svg-canvas {
+  position: relative;
+  z-index: 1;
+}
+
+.municipality-svg {
+  display: block;
   width: 100%;
   height: 100%;
-  border-radius: 24px;
 }
 
-.leaflet-control-attribution {
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
+.municipality-svg [id^="PR-"] {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.map-tooltip {
-  border: 0;
-  border-radius: 14px;
-  background: rgba(16, 37, 43, 0.92);
-  color: #fff8ee;
-  box-shadow: 0 12px 30px rgba(16, 37, 43, 0.24);
-  padding: 8px 10px;
+.municipality-cursor-tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(55, 53, 47, 0.95);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  transition: opacity 120ms ease;
+}
+
+.municipality-cursor-tooltip.is-visible {
+  opacity: 1;
+}
+
+.case-drawer {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  bottom: 24px;
+  z-index: 50;
+  width: min(440px, calc(100vw - 32px));
+  box-shadow:
+    0 18px 48px rgba(15, 23, 42, 0.08),
+    0 4px 10px rgba(15, 23, 42, 0.04);
+  animation: case-drawer-in 180ms ease-out;
+}
+
+@keyframes case-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .case-drawer {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
 }

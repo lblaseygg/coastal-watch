@@ -4,42 +4,58 @@ import type { CaseRecord, MunicipalityRecord } from "@/lib/contracts";
 type CaseSidebarProps = {
   activeMunicipality: MunicipalityRecord | null;
   cases: CaseRecord[];
+  onClose: () => void;
   selectedMunicipalityId: string | null;
 };
 
 export default function CaseSidebar({
   activeMunicipality,
   cases,
+  onClose,
   selectedMunicipalityId
 }: CaseSidebarProps) {
   return (
-    <aside className="panel flex min-h-[640px] flex-col overflow-hidden">
-      <div className="border-b border-[var(--line)] bg-[linear-gradient(135deg,rgba(13,95,115,0.12),rgba(255,255,255,0.28))] px-6 py-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
-          Case browser
-        </p>
-        <h2 className="mt-2 font-serif text-3xl text-[var(--ink)]">
-          {activeMunicipality?.name ?? "Approved sample cases"}
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-          {selectedMunicipalityId
-            ? "The list is pinned to the selected municipality."
-            : "Select a municipality to focus the list, or browse all approved sample cases."}
-        </p>
-      </div>
+    <>
+      <aside className="case-drawer panel flex flex-col overflow-hidden">
+        <div className="border-b border-[var(--line)] bg-[var(--soft)] px-6 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                Municipality cases
+              </p>
+              <h2 className="mt-2 text-[1.75rem] font-semibold leading-tight text-[var(--ink)]">
+                {activeMunicipality?.name ?? "Selected municipality"}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+                {selectedMunicipalityId
+                  ? "This drawer shows the public cases pinned to the municipality you selected."
+                  : "Select a municipality to open its public cases."}
+              </p>
+            </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        {cases.length > 0 ? (
-          cases.map((currentCase) => <CaseCard currentCase={currentCase} key={currentCase.id} />)
-        ) : (
-          <div className="rounded-[26px] border border-dashed border-[var(--line)] bg-white/55 p-6">
-            <p className="text-lg font-semibold text-[var(--ink)]">No matching cases</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Adjust the search or status filter, or clear the selected municipality.
-            </p>
+            <button
+              className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
+              onClick={onClose}
+              type="button"
+            >
+              Close
+            </button>
           </div>
-        )}
-      </div>
-    </aside>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          {cases.length > 0 ? (
+            cases.map((currentCase) => <CaseCard currentCase={currentCase} key={currentCase.id} />)
+          ) : (
+            <div className="rounded-[16px] border border-dashed border-[var(--line)] bg-[var(--soft)] p-6">
+              <p className="text-lg font-semibold text-[var(--ink)]">No matching cases</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                This municipality does not have any cases that match the current filters.
+              </p>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

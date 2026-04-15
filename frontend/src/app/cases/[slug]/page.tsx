@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getApprovedCaseBySlug, getMapMunicipalities } from "@/lib/api";
 
@@ -27,26 +26,26 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   return (
     <main className="page-shell">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <Link
-          className="w-fit rounded-full border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--tide)] hover:text-[var(--tide)]"
+        <a
+          className="w-fit rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
           href="/"
         >
           Back to map
-        </Link>
+        </a>
 
         <section className="panel overflow-hidden">
-          <div className="border-b border-[var(--line)] bg-[linear-gradient(135deg,rgba(13,95,115,0.16),rgba(255,252,247,0.2))] px-6 py-8 md:px-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--tide)]">
+          <div className="border-b border-[var(--line)] bg-[var(--soft)] px-6 py-8 md:px-10">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
               {municipality?.name ?? "Unknown municipality"}
             </p>
-            <h1 className="mt-3 max-w-3xl font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-4xl font-semibold leading-tight text-[var(--ink)] md:text-5xl">
               {currentCase.title}
             </h1>
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-[var(--surf)] px-3 py-1 text-sm font-semibold text-[var(--tide)]">
+              <span className="rounded-[8px] bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
                 {currentCase.category.replaceAll("_", " ")}
               </span>
-              <span className="rounded-full bg-white/80 px-3 py-1 text-sm font-semibold text-[var(--muted)]">
+              <span className="rounded-[8px] border border-[var(--line)] bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
                 {currentCase.status}
               </span>
             </div>
@@ -55,17 +54,17 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           <div className="grid gap-6 px-6 py-8 md:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] md:px-10">
             <div className="space-y-6">
               <section>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--tide)]">
+                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                   Summary
                 </h2>
-                <p className="mt-3 text-lg leading-8 text-[var(--ink)]">
+                <p className="mt-3 text-base leading-8 text-[var(--ink)]">
                   {currentCase.public_summary}
                 </p>
               </section>
 
               <section className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-3xl border border-[var(--line)] bg-white/65 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
+                <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-5">
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                     First reported
                   </p>
                   <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
@@ -74,8 +73,8 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
                     })}
                   </p>
                 </div>
-                <div className="rounded-3xl border border-[var(--line)] bg-white/65 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
+                <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-5">
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                     Last updated
                   </p>
                   <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
@@ -87,14 +86,14 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               </section>
 
               <section>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--tide)]">
+                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                   Source-backed tags
                 </h2>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {currentCase.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-[var(--line)] bg-white/75 px-3 py-1 text-sm font-medium text-[var(--muted)]"
+                      className="rounded-[999px] border border-[var(--line)] bg-[var(--soft)] px-3 py-1 text-sm font-medium text-[var(--muted)]"
                     >
                       {tag}
                     </span>
@@ -103,20 +102,20 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               </section>
             </div>
 
-            <aside className="rounded-[24px] border border-[var(--line)] bg-white/78 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
+            <aside className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-6">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                 Sources
               </p>
               <div className="mt-4 space-y-4">
                 {sources.map((source) => (
                   <a
                     key={source.id}
-                    className="block rounded-3xl border border-[var(--line)] bg-[var(--panel-strong)] p-4 transition hover:border-[var(--tide)] hover:-translate-y-0.5"
+                    className="block rounded-[14px] border border-[var(--line)] bg-white p-4 transition hover:bg-[var(--panel-strong)]"
                     href={source.url}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--tide)]">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                       {source.publisher}
                     </p>
                     <h3 className="mt-2 text-lg font-semibold text-[var(--ink)]">{source.title}</h3>
