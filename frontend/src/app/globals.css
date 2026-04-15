@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4ead5;
+  --bg-deep: #dcebee;
+  --panel: rgba(255, 252, 247, 0.82);
+  --panel-strong: rgba(255, 252, 247, 0.94);
+  --ink: #10252b;
+  --muted: #49626b;
+  --line: rgba(16, 37, 43, 0.12);
+  --tide: #0d5f73;
+  --coral: #f16d5b;
+  --kelp: #29584a;
+  --shadow: 0 24px 60px rgba(16, 37, 43, 0.14);
+  --radius-xl: 28px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(241, 109, 91, 0.18), transparent 26%),
+    radial-gradient(circle at right 20%, rgba(13, 95, 115, 0.14), transparent 24%),
+    linear-gradient(180deg, var(--bg) 0%, #f7f0e4 42%, var(--bg-deep) 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background-image: radial-gradient(rgba(16, 37, 43, 0.03) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 32px 20px 48px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+}
+
+.leaflet-control-attribution {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.map-tooltip {
+  border: 0;
+  border-radius: 14px;
+  background: rgba(16, 37, 43, 0.92);
+  color: #fff8ee;
+  box-shadow: 0 12px 30px rgba(16, 37, 43, 0.24);
+  padding: 8px 10px;
+}
