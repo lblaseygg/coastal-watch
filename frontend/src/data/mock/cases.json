@@ -1,0 +1,97 @@
+{
+  "schema_version": "phase0-v1",
+  "items": [
+    {
+      "id": "case_rincon_access_path",
+      "slug": "rincon-access-path",
+      "title": "Sample: Rincon access path concern",
+      "municipality_id": "rincon",
+      "status": "active",
+      "publication_status": "approved",
+      "review_state": "approved",
+      "category": "access_restriction",
+      "tags": ["beach-access", "community-report"],
+      "public_summary": "Residents reported intermittent obstruction near a coastal access path. The platform tracks source-backed updates and agency responses.",
+      "internal_summary": "Keep wording neutral. Source reporting supports a reported access concern but not a legal conclusion.",
+      "location": {
+        "lat": 18.3414,
+        "lng": -67.2491,
+        "precision": "approximate"
+      },
+      "first_reported_at": "2026-03-02T00:00:00Z",
+      "last_updated_at": "2026-04-10T15:30:00Z",
+      "source_article_ids": ["art_001", "art_002"],
+      "review_reason_codes": [],
+      "confidence_score": 0.86
+    },
+    {
+      "id": "case_aguadilla_shoreline_project",
+      "slug": "aguadilla-shoreline-project",
+      "title": "Sample: Aguadilla shoreline project update",
+      "municipality_id": "aguadilla",
+      "status": "monitoring",
+      "publication_status": "approved",
+      "review_state": "approved",
+      "category": "development",
+      "tags": ["development", "shoreline"],
+      "public_summary": "Coverage describes a shoreline development proposal and the status of agency filings. The case tracks source-backed updates over time.",
+      "internal_summary": "Approved after reviewer removed speculative language about permitting outcome.",
+      "location": {
+        "lat": 18.427,
+        "lng": -67.153,
+        "precision": "approximate"
+      },
+      "first_reported_at": "2026-02-17T00:00:00Z",
+      "last_updated_at": "2026-04-08T18:00:00Z",
+      "source_article_ids": ["art_003"],
+      "review_reason_codes": ["policy_or_permitting"],
+      "confidence_score": 0.79
+    },
+    {
+      "id": "case_loiza_erosion_barrier",
+      "slug": "loiza-erosion-barrier",
+      "title": "Sample: Loiza shoreline erosion response",
+      "municipality_id": "loiza",
+      "status": "active",
+      "publication_status": "approved",
+      "review_state": "approved",
+      "category": "environmental_concern",
+      "tags": ["erosion", "infrastructure"],
+      "public_summary": "Reports describe shoreline erosion impacts and a response measure under discussion. The case tracks cited reporting and official statements.",
+      "internal_summary": "Location intentionally coarse because sources do not support parcel-level precision.",
+      "location": {
+        "lat": 18.431,
+        "lng": -65.881,
+        "precision": "municipality"
+      },
+      "first_reported_at": "2026-01-25T00:00:00Z",
+      "last_updated_at": "2026-04-12T13:45:00Z",
+      "source_article_ids": ["art_004"],
+      "review_reason_codes": [],
+      "confidence_score": 0.83
+    },
+    {
+      "id": "case_salinas_permitting_notice",
+      "slug": "salinas-permitting-notice",
+      "title": "Sample: Salinas permitting notice under review",
+      "municipality_id": "salinas",
+      "status": "reported",
+      "publication_status": "pending_review",
+      "review_state": "pending_review",
+      "category": "policy_or_permitting",
+      "tags": ["permitting", "under-review"],
+      "public_summary": "A newly discovered article is under review and is not yet eligible for publication.",
+      "internal_summary": "Potential legal-claim language requires review before any public summary is exposed.",
+      "location": {
+        "lat": 17.962,
+        "lng": -66.303,
+        "precision": "municipality"
+      },
+      "first_reported_at": "2026-04-13T00:00:00Z",
+      "last_updated_at": "2026-04-14T09:15:00Z",
+      "source_article_ids": ["art_005"],
+      "review_reason_codes": ["legal_claim", "unclear_location"],
+      "confidence_score": 0.58
+    }
+  ]
+}

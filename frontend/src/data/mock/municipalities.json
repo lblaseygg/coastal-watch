@@ -1,0 +1,49 @@
+{
+  "schema_version": "phase0-v1",
+  "items": [
+    {
+      "id": "aguadilla",
+      "name": "Aguadilla",
+      "region": "west",
+      "coastal": true,
+      "centroid": {
+        "lat": 18.4274,
+        "lng": -67.1541
+      },
+      "geojson_key": "aguadilla"
+    },
+    {
+      "id": "loiza",
+      "name": "Loiza",
+      "region": "east",
+      "coastal": true,
+      "centroid": {
+        "lat": 18.4313,
+        "lng": -65.8802
+      },
+      "geojson_key": "loiza"
+    },
+    {
+      "id": "rincon",
+      "name": "Rincon",
+      "region": "west",
+      "coastal": true,
+      "centroid": {
+        "lat": 18.3408,
+        "lng": -67.2499
+      },
+      "geojson_key": "rincon"
+    },
+    {
+      "id": "salinas",
+      "name": "Salinas",
+      "region": "south",
+      "coastal": true,
+      "centroid": {
+        "lat": 17.9619,
+        "lng": -66.3032
+      },
+      "geojson_key": "salinas"
+    }
+  ]
+}

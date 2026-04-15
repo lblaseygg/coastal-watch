@@ -1,8 +1,8 @@
 import type { FeatureCollection } from "geojson";
 import municipalityGeoJson from "@/data/geojson/puerto-rico-municipalities";
-import municipalitiesJson from "../../../docs/contracts/mock-data/municipalities.json";
-import casesJson from "../../../docs/contracts/mock-data/cases.json";
-import articlesJson from "../../../docs/contracts/mock-data/articles.json";
+import municipalitiesJson from "@/data/mock/municipalities.json";
+import casesJson from "@/data/mock/cases.json";
+import articlesJson from "@/data/mock/articles.json";
 import type {
   ArticleRecord,
   CaseRecord,
