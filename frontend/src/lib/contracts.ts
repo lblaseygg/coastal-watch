@@ -75,3 +75,25 @@ export type MockCollection<T> = {
   schema_version: string;
   items: T[];
 };
+
+export type MapMunicipalityRecord = {
+  id: string;
+  name: string;
+  geojson_key: string;
+  centroid: {
+    lat: number;
+    lng: number;
+  };
+  case_counts: {
+    total: number;
+    active: number;
+  };
+  highlight_status: string;
+};
+
+export type PaginationRecord = {
+  page: number;
+  page_size: number;
+  total_items: number;
+  total_pages: number;
+};

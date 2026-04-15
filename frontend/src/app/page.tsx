@@ -1,9 +1,19 @@
 import HomeShell from "@/components/home-shell";
-import { getApprovedCases, getMunicipalities, getMunicipalityGeoJson } from "@/lib/mock-data";
+import {
+  getApprovedCases,
+  getMapMunicipalities,
+  getMunicipalityGeoJson,
+  mapMunicipalitiesToRecords
+} from "@/lib/api";
 
-export default function HomePage() {
-  const municipalities = getMunicipalities();
-  const cases = getApprovedCases();
+export default async function HomePage() {
+  const [mapMunicipalities, casesResponse] = await Promise.all([
+    getMapMunicipalities(),
+    getApprovedCases()
+  ]);
+
+  const municipalities = mapMunicipalitiesToRecords(mapMunicipalities);
+  const cases = casesResponse.items;
   const municipalityGeoJson = getMunicipalityGeoJson();
 
   return (

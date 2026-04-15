@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getApprovedCaseBySlug, getPublicSourcesForCase, getMunicipalityById } from "@/lib/mock-data";
+import { getApprovedCaseBySlug, getMapMunicipalities } from "@/lib/api";
 
 type CaseDetailPageProps = {
   params: {
@@ -8,15 +8,21 @@ type CaseDetailPageProps = {
   };
 };
 
-export default function CaseDetailPage({ params }: CaseDetailPageProps) {
-  const currentCase = getApprovedCaseBySlug(params.slug);
+export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
+  const [casePayload, municipalities] = await Promise.all([
+    getApprovedCaseBySlug(params.slug),
+    getMapMunicipalities()
+  ]);
 
-  if (!currentCase) {
+  if (!casePayload) {
     notFound();
   }
 
-  const municipality = getMunicipalityById(currentCase.municipality_id);
-  const sources = getPublicSourcesForCase(currentCase.id);
+  const currentCase = casePayload.case;
+  const sources = casePayload.sources;
+  const municipality = municipalities.find(
+    (currentMunicipality) => currentMunicipality.id === currentCase.municipality_id
+  );
 
   return (
     <main className="page-shell">

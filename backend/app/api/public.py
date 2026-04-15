@@ -143,7 +143,10 @@ def get_case(case_id: str, db: Session = Depends(get_db)) -> dict:
     query = (
         select(Case)
         .options(selectinload(Case.articles))
-        .where(Case.id == case_id, Case.publication_status == "approved")
+        .where(
+            or_(Case.id == case_id, Case.slug == case_id),
+            Case.publication_status == "approved",
+        )
     )
     current_case = db.scalar(query)
 
