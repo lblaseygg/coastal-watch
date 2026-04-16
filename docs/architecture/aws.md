@@ -1,6 +1,6 @@
 # AWS Architecture
 
-This document describes how Coastal Watch is deployed in AWS and why specific services were chosen.
+This document describes how Coastal Watch will be deployed in AWS and why specific services were chosen.
 
 ---
 
