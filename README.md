@@ -62,7 +62,7 @@ A scheduled process that:
 - Next.js
 - TypeScript
 - Tailwind CSS
-- Leaflet (map rendering)
+- mapsvg.com 
 
 ### Backend
 - FastAPI (Python)
