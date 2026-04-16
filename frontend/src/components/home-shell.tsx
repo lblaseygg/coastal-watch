@@ -115,6 +115,12 @@ export default function HomeShell({ approvedCases, municipalities }: HomeShellPr
                   >
                     Methodology
                   </Link>
+                  <Link
+                    className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
+                    href="/admin"
+                  >
+                    Admin review
+                  </Link>
                   <button
                     className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
                     onClick={() => {

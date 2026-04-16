@@ -22,6 +22,7 @@ services:
       db:
         condition: service_healthy
     environment:
+      ADMIN_API_TOKEN: coastal-watch-admin-demo
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/coastal_watch
     ports:
       - "8000:8000"
