@@ -170,9 +170,9 @@ Implemented:
 - public backend API
 - database models and migrations
 - Docker local stack
+- admin review and auth
 
 Still to do:
-- admin review and auth
 - ingestion worker
 - tests and observability
 - AWS deployment
