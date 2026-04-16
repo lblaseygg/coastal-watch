@@ -24,60 +24,63 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   );
 
   return (
-    <main className="page-shell">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <a
-          className="w-fit rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
-          href="/"
-        >
+    <main className="page-shell detail-page-shell">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <a className="detail-back-link" href="/">
           Back to map
         </a>
 
-        <section className="panel overflow-hidden">
-          <div className="border-b border-[var(--line)] bg-[var(--soft)] px-6 py-8 md:px-10">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+        <section className="detail-shell">
+          <div className="max-w-4xl">
+            <p className="detail-kicker text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--muted-strong)]">
               {municipality?.name ?? "Unknown municipality"}
             </p>
-            <h1 className="mt-3 max-w-3xl text-4xl font-semibold leading-tight text-[var(--ink)] md:text-5xl">
+            <h1 className="detail-title mt-4 max-w-4xl text-[2.3rem] font-semibold leading-[1.05] tracking-[-0.04em] text-[var(--ink-strong)] md:text-[4.4rem]">
               {currentCase.title}
             </h1>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-[8px] bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
+            <div className="detail-meta-row mt-5 flex flex-wrap gap-4 text-sm text-[var(--muted)]">
+              <span className="detail-meta-pill">
                 {currentCase.category.replaceAll("_", " ")}
               </span>
-              <span className="rounded-[8px] border border-[var(--line)] bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
+              <span className="detail-meta-pill">
                 {currentCase.status}
+              </span>
+              <span className="detail-meta-copy">
+                Updated{" "}
+                {new Date(currentCase.last_updated_at).toLocaleDateString("en-US", {
+                  dateStyle: "long"
+                })}
               </span>
             </div>
           </div>
 
-          <div className="grid gap-6 px-6 py-8 md:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] md:px-10">
+          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.9fr)] lg:items-start">
             <div className="space-y-6">
               <section>
-                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                   Summary
                 </h2>
-                <p className="mt-3 text-base leading-8 text-[var(--ink)]">
+                <p className="detail-summary mt-4 max-w-3xl text-[1.03rem] leading-9 text-[var(--ink)]">
                   {currentCase.public_summary}
                 </p>
               </section>
 
-              <section className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-5">
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+              <section className="grid gap-8 md:grid-cols-2">
+                <div className="detail-info-block">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                     First reported
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                  <p className="mt-2 text-lg font-semibold text-[var(--ink-strong)]">
                     {new Date(currentCase.first_reported_at).toLocaleDateString("en-US", {
                       dateStyle: "long"
                     })}
                   </p>
                 </div>
-                <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-5">
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                <div className="detail-info-block">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                     Last updated
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                  <p className="mt-2 text-lg font-semibold text-[var(--ink-strong)]">
                     {new Date(currentCase.last_updated_at).toLocaleDateString("en-US", {
                       dateStyle: "long"
                     })}
@@ -86,15 +89,12 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               </section>
 
               <section>
-                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                   Source-backed tags
                 </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3">
                   {currentCase.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-[999px] border border-[var(--line)] bg-[var(--soft)] px-3 py-1 text-sm font-medium text-[var(--muted)]"
-                    >
+                    <span key={tag} className="detail-tag">
                       {tag}
                     </span>
                   ))}
@@ -102,24 +102,26 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               </section>
             </div>
 
-            <aside className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+            <aside className="detail-sources">
+              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                 Sources
               </p>
-              <div className="mt-4 space-y-4">
+              <div className="mt-5 space-y-5">
                 {sources.map((source) => (
                   <a
                     key={source.id}
-                    className="block rounded-[14px] border border-[var(--line)] bg-white p-4 transition hover:bg-[var(--panel-strong)]"
+                    className="detail-source-link"
                     href={source.url}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
                       {source.publisher}
                     </p>
-                    <h3 className="mt-2 text-lg font-semibold text-[var(--ink)]">{source.title}</h3>
-                    <p className="mt-2 text-sm text-[var(--muted)]">
+                    <h3 className="mt-2 text-[1.08rem] font-semibold leading-7 text-[var(--ink-strong)]">
+                      {source.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
                       Published{" "}
                       {new Date(source.published_at).toLocaleDateString("en-US", {
                         dateStyle: "medium"

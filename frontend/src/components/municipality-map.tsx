@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 type MunicipalityMapProps = {
   hoveredMunicipalityId: string | null;
@@ -19,7 +19,7 @@ function slugifyMunicipalityName(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export default function MunicipalityMap({
+function MunicipalityMap({
   hoveredMunicipalityId,
   municipalityCounts,
   onHoverMunicipality,
@@ -170,11 +170,11 @@ export default function MunicipalityMap({
   ]);
 
   return (
-    <div className="municipality-svg-shell relative h-[680px] overflow-hidden rounded-[20px]" ref={shellRef}>
-      <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex justify-end gap-4">
+    <div className="municipality-svg-shell relative h-[680px] overflow-hidden rounded-[28px]" ref={shellRef}>
+      <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex items-start justify-between gap-4">
         {selectedMunicipalityId ? (
           <button
-            className="pointer-events-auto rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
+            className="toolbar-button pointer-events-auto"
             onClick={() => onSelectMunicipality(null)}
             type="button"
           >
@@ -196,3 +196,13 @@ export default function MunicipalityMap({
     </div>
   );
 }
+
+export default memo(
+  MunicipalityMap,
+  (previousProps, nextProps) =>
+    previousProps.hoveredMunicipalityId === nextProps.hoveredMunicipalityId &&
+    previousProps.selectedMunicipalityId === nextProps.selectedMunicipalityId &&
+    previousProps.municipalityCounts === nextProps.municipalityCounts &&
+    previousProps.onHoverMunicipality === nextProps.onHoverMunicipality &&
+    previousProps.onSelectMunicipality === nextProps.onSelectMunicipality
+);

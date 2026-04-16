@@ -1,56 +1,75 @@
+import Link from "next/link";
+
 const principles = [
-  "Only approved cases should appear on public endpoints.",
-  "Every public-facing claim must retain source attribution.",
-  "Summaries should remain neutral and should not imply wrongdoing beyond what sources support.",
-  "Sensitive or ambiguous claims route to human review before publication."
+  "Only approved cases appear on public pages and public API responses.",
+  "Every public-facing claim keeps a traceable source behind it.",
+  "Summaries stay neutral and avoid implying more than the sources support.",
+  "Sensitive, ambiguous, or unclear records remain in review before publication."
+];
+
+const boundaries = [
+  "The public site shows approved records only, not internal review notes or draft extractions.",
+  "Cases are organized to make coastal pressure legible by municipality, not to replace official agency records.",
+  "The workflow distinguishes between reported pressure, active review, and resolved outcomes so the public record remains readable."
 ];
 
 export default function MethodologyPage() {
   return (
-    <main className="page-shell">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <a
-          className="w-fit rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
-          href="/"
-        >
+    <main className="page-shell methodology-page-shell">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <Link className="detail-back-link" href="/">
           Back to map
-        </a>
+        </Link>
 
-        <section className="panel px-6 py-8 md:px-10">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
-            Methodology
-          </p>
-          <h1 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight text-[var(--ink)] md:text-5xl">
-            Public information, structured carefully.
-          </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-[var(--muted)]">
-            Puerto Rico Coastal Watch is designed to transform scattered source material into a
-            consistent, source-backed case view. The public interface is intentionally narrower than
-            the internal workflow: review notes, raw extraction data, and draft records stay out of
-            public responses until they are approved.
-          </p>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {principles.map((principle) => (
-              <div
-                key={principle}
-                className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-5"
-              >
-                <p className="text-base leading-7 text-[var(--ink)]">{principle}</p>
-              </div>
-            ))}
+        <section className="methodology-hero">
+          <div className="methodology-hero-main">
+            <p className="methodology-kicker">Methodology</p>
+            <h1 className="methodology-title">Public information, structured carefully.</h1>
+            <p className="methodology-copy">
+              Puerto Rico Coastal Watch turns scattered source material into a consistent public
+              case record. The public interface is intentionally narrower than the internal review
+              workflow, so readers can browse cases with confidence without seeing draft or
+              unresolved material.
+            </p>
           </div>
 
-          <div className="mt-8 rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-6">
-            <h2 className="text-2xl font-semibold text-[var(--ink)]">Current MVP boundaries</h2>
-            <ul className="mt-4 space-y-3 text-[var(--muted)]">
-              <li>The current frontend uses mock data aligned to the shared Phase 0 contracts.</li>
-              <li>Map interactions, case cards, and detail routes are implemented before API work.</li>
-              <li>
-                The sample data is illustrative and neutral; it exists to validate UI and contracts,
-                not to publish real-world findings.
-              </li>
-            </ul>
+          <aside className="methodology-aside">
+            <p className="methodology-aside-heading">What this means in practice</p>
+            <p className="methodology-aside-copy">
+              Public pages are designed for clarity. Review notes, raw extraction output, and
+              uncertain records stay out of public view until they are verified.
+            </p>
+          </aside>
+        </section>
+
+        <section className="methodology-section">
+          <div className="methodology-section-head">
+            <p className="methodology-section-kicker">Publishing rules</p>
+            <p className="methodology-section-copy">
+              These are the standards used before a record is allowed onto the public map.
+            </p>
+          </div>
+
+          <div className="methodology-grid">
+            {principles.map((principle) => (
+              <article className="methodology-card" key={principle}>
+                <p className="methodology-card-copy">{principle}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="methodology-section">
+          <div className="methodology-section-head">
+            <p className="methodology-section-kicker">Current boundaries</p>
+          </div>
+
+          <div className="methodology-rule-list">
+            {boundaries.map((boundary) => (
+              <div className="methodology-rule" key={boundary}>
+                <p>{boundary}</p>
+              </div>
+            ))}
           </div>
         </section>
       </div>
