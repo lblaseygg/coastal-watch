@@ -69,6 +69,21 @@ class PublicSource(BaseModel):
     published_at: datetime
 
 
+class PublicNewsItem(BaseModel):
+    id: str
+    url: str
+    publisher: str
+    title: str
+    published_at: datetime
+    excerpt: str
+    municipality_ids: list[str]
+    municipality_names: list[str]
+    linked_case_ids: list[str]
+    linked_case_slugs: list[str]
+    linked_case_titles: list[str]
+    category: str | None = None
+
+
 class AuditEvent(BaseModel):
     action: str
     actor_id: str

@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session, selectinload
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.db.session import get_db
-from app.models import Case, Municipality
-from app.schemas import PublicCaseSummary, PublicSource, success_payload
+from app.models import Article, Case, Municipality
+from app.schemas import PublicCaseSummary, PublicNewsItem, PublicSource, success_payload
 
 
 router = APIRouter(tags=["public"])
@@ -30,6 +30,48 @@ def serialize_case(current_case: Case) -> dict:
         },
         first_reported_at=current_case.first_reported_at,
         last_updated_at=current_case.last_updated_at,
+    ).model_dump(mode="json")
+
+
+def serialize_news_item(article: Article) -> dict:
+    approved_cases = sorted(
+        [linked_case for linked_case in article.cases if linked_case.publication_status == "approved"],
+        key=lambda linked_case: linked_case.last_updated_at,
+        reverse=True,
+    )
+    excerpt = (article.cleaned_text or "").strip().replace("\n", " ")
+    excerpt = " ".join(excerpt.split())[:280]
+
+    municipality_ids: list[str] = []
+    municipality_names: list[str] = []
+    linked_case_ids: list[str] = []
+    linked_case_slugs: list[str] = []
+    linked_case_titles: list[str] = []
+    category: str | None = None
+
+    for linked_case in approved_cases:
+        linked_case_ids.append(linked_case.id)
+        linked_case_slugs.append(linked_case.slug)
+        linked_case_titles.append(linked_case.title)
+        if linked_case.municipality_id not in municipality_ids:
+            municipality_ids.append(linked_case.municipality_id)
+            municipality_names.append(linked_case.municipality.name if linked_case.municipality else linked_case.municipality_id)
+        if category is None:
+            category = linked_case.category
+
+    return PublicNewsItem(
+        id=article.id,
+        url=article.url,
+        publisher=article.publisher,
+        title=article.title,
+        published_at=article.published_at,
+        excerpt=excerpt or article.title,
+        municipality_ids=municipality_ids,
+        municipality_names=municipality_names,
+        linked_case_ids=linked_case_ids,
+        linked_case_slugs=linked_case_slugs,
+        linked_case_titles=linked_case_titles,
+        category=category,
     ).model_dump(mode="json")
 
 
@@ -165,3 +207,42 @@ def get_case(case_id: str, db: Session = Depends(get_db)) -> dict:
     ]
 
     return success_payload({"case": serialize_case(current_case), "sources": sources})
+
+
+@router.get("/news")
+def list_news(
+    municipality_id: str | None = None,
+    limit: int = Query(default=12, ge=1, le=50),
+    db: Session = Depends(get_db),
+) -> dict:
+    article_id_query = (
+        select(Article.id)
+        .join(Article.cases)
+        .where(Case.publication_status == "approved")
+        .group_by(Article.id, Article.published_at, Article.created_at)
+        .order_by(Article.published_at.desc(), Article.created_at.desc())
+        .limit(limit)
+    )
+
+    if municipality_id:
+        article_id_query = article_id_query.where(Case.municipality_id == municipality_id)
+
+    article_ids = db.scalars(article_id_query).all()
+    if not article_ids:
+        return success_payload({"items": []})
+
+    articles = db.scalars(
+        select(Article)
+        .options(selectinload(Article.cases).selectinload(Case.municipality))
+        .where(Article.id.in_(article_ids))
+    ).all()
+    article_by_id = {article.id: article for article in articles}
+
+    items: list[dict] = []
+    for article_id in article_ids:
+        article = article_by_id.get(article_id)
+        if article is None:
+            continue
+        items.append(serialize_news_item(article))
+
+    return success_payload({"items": items})

@@ -6,7 +6,7 @@ from worker.db import get_session
 from worker.discovery import discover_articles
 from worker.extraction import extract_articles
 from worker.fetching import fetch_queued_articles
-from worker.routing import route_extractions
+from worker.routing import reset_extraction_state, route_extractions
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,6 +24,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     route_parser = subparsers.add_parser("route", help="Create review items and case candidates")
     route_parser.add_argument("--limit", type=int, default=20)
+
+    reprocess_parser = subparsers.add_parser(
+        "reprocess",
+        help="Clear extracted/routed state and rebuild it from existing cleaned articles",
+    )
+    reprocess_parser.add_argument("--limit", type=int, default=200)
 
     run_parser = subparsers.add_parser("run-once", help="Run discovery, fetch, extract, and routing once")
     run_parser.add_argument("--max-results", type=int, default=5)
@@ -51,6 +57,13 @@ def main() -> None:
 
         if args.command == "route":
             print(route_extractions(session, limit=args.limit))
+            return
+
+        if args.command == "reprocess":
+            cleared = reset_extraction_state(session)
+            extracted = extract_articles(session, limit=args.limit)
+            routed = route_extractions(session, limit=args.limit * 2)
+            print({"cleared": cleared, "extract": extracted, "route": routed})
             return
 
         if args.command == "run-once":

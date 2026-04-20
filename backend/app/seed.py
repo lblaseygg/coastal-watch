@@ -139,8 +139,18 @@ def seed_case_article_links(session) -> None:
             )
 
 
+def clear_seeded_runtime_tables(session) -> None:
+    session.execute(delete(case_article_links))
+    session.execute(delete(ReviewQueueItem))
+    session.execute(delete(ArticleExtraction))
+    session.execute(delete(Case))
+    session.execute(delete(Article))
+    session.flush()
+
+
 def main() -> None:
     with SessionLocal() as session:
+        clear_seeded_runtime_tables(session)
         seed_municipalities(session)
         seed_articles(session)
         seed_cases(session)

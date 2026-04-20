@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import PublicNav from "@/components/public-nav";
 import { getApprovedCaseBySlug, getMapMunicipalities } from "@/lib/api";
 
 type CaseDetailPageProps = {
@@ -26,6 +27,15 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   return (
     <main className="page-shell detail-page-shell">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <header className="hero-panel overflow-hidden px-2 py-4 md:px-3 md:py-5">
+          <div className="flex items-start justify-between gap-6">
+            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
+              Case detail
+            </p>
+            <PublicNav activeHref="/" />
+          </div>
+        </header>
+
         <a className="detail-back-link" href="/">
           Back to map
         </a>

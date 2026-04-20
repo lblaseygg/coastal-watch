@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import type { CaseRecord, MunicipalityRecord } from "@/lib/contracts";
+import type { CaseRecord, MunicipalityRecord, NewsRecord } from "@/lib/contracts";
 import CaseSidebar from "@/components/case-sidebar";
+import PublicNav from "@/components/public-nav";
 
 const MunicipalityMap = dynamic(() => import("@/components/municipality-map"), {
   ssr: false,
@@ -17,13 +18,14 @@ const MunicipalityMap = dynamic(() => import("@/components/municipality-map"), {
 
 type HomeShellProps = {
   approvedCases: CaseRecord[];
+  latestNews: NewsRecord[];
   municipalities: MunicipalityRecord[];
 };
 
 const DRAWER_TRANSITION_MS = 420;
 const DRAWER_OPEN_DELAY_MS = 24;
 
-export default function HomeShell({ approvedCases, municipalities }: HomeShellProps) {
+export default function HomeShell({ approvedCases, latestNews, municipalities }: HomeShellProps) {
   const currentYear = new Date().getFullYear();
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(null);
   const [renderedMunicipalityId, setRenderedMunicipalityId] = useState<string | null>(null);
@@ -51,6 +53,35 @@ export default function HomeShell({ approvedCases, municipalities }: HomeShellPr
 
     return counts;
   }, [approvedCases]);
+
+  const newsByMunicipality = useMemo(() => {
+    const grouped = new Map<string, NewsRecord[]>();
+
+    for (const item of latestNews) {
+      for (const municipalityId of item.municipality_ids) {
+        const currentItems = grouped.get(municipalityId) ?? [];
+        currentItems.push(item);
+        grouped.set(municipalityId, currentItems);
+      }
+    }
+
+    for (const [municipalityId, items] of grouped) {
+      grouped.set(
+        municipalityId,
+        [...items].sort(
+          (left, right) => new Date(right.published_at).getTime() - new Date(left.published_at).getTime()
+        )
+      );
+    }
+
+    return grouped;
+  }, [latestNews]);
+
+  const latestNewsPreview = useMemo(() => latestNews.slice(0, 6), [latestNews]);
+  const hoveredMunicipalityNews = useMemo(
+    () => (hoveredMunicipalityId ? newsByMunicipality.get(hoveredMunicipalityId) ?? [] : []),
+    [hoveredMunicipalityId, newsByMunicipality]
+  );
 
   const filterCases = (municipalityId: string | null) => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -188,17 +219,7 @@ export default function HomeShell({ approvedCases, municipalities }: HomeShellPr
                 Title/Name of page goes here
               </p>
 
-              <div className="hero-nav">
-                <Link className="hero-nav-link" href="/legal-framework">
-                  Legal framework
-                </Link>
-                <Link className="hero-nav-link" href="/methodology">
-                  Methodology
-                </Link>
-                <Link className="hero-nav-link" href="/admin">
-                  Admin
-                </Link>
-              </div>
+              <PublicNav activeHref="/" />
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
@@ -280,12 +301,55 @@ export default function HomeShell({ approvedCases, municipalities }: HomeShellPr
         <section>
           <div className="map-frame self-start overflow-hidden p-3 md:p-4">
             <MunicipalityMap
+              hoveredMunicipalityNews={hoveredMunicipalityNews}
               hoveredMunicipalityId={hoveredMunicipalityId}
               municipalityCounts={municipalityCounts}
               onHoverMunicipality={setHoveredMunicipalityId}
               onSelectMunicipality={setSelectedMunicipalityId}
               selectedMunicipalityId={selectedMunicipalityId}
             />
+          </div>
+        </section>
+
+        <section className="news-preview">
+          <div className="news-preview-head">
+            <div>
+              <p className="legal-snapshot-kicker">Latest reporting</p>
+              <h2 className="news-preview-title">Automatically published coverage from trusted Puerto Rico sources.</h2>
+            </div>
+            <Link className="toolbar-button" href="/news">
+              View all reporting
+            </Link>
+          </div>
+
+          <div className="news-preview-grid">
+            {latestNewsPreview.map((item) => (
+              <article className="news-preview-card" key={item.id}>
+                <div className="news-preview-meta">
+                  <span>{item.publisher}</span>
+                  <span>{new Date(item.published_at).toLocaleDateString("es-PR", { month: "short", day: "numeric", year: "numeric" })}</span>
+                </div>
+                <h3 className="news-preview-card-title">
+                  <a href={item.url} rel="noreferrer" target="_blank">
+                    {item.title}
+                  </a>
+                </h3>
+                <p className="news-preview-card-copy">{item.excerpt}</p>
+                <div className="news-preview-tags">
+                  {item.municipality_names.slice(0, 2).map((municipalityName) => (
+                    <span className="news-preview-tag" key={municipalityName}>
+                      {municipalityName}
+                    </span>
+                  ))}
+                  {item.category ? <span className="news-preview-tag">{item.category.replaceAll("_", " ")}</span> : null}
+                </div>
+                {item.linked_case_slugs[0] ? (
+                  <Link className="news-preview-link" href={`/cases/${item.linked_case_slugs[0]}`}>
+                    Read linked case
+                  </Link>
+                ) : null}
+              </article>
+            ))}
           </div>
         </section>
 
@@ -359,6 +423,9 @@ export default function HomeShell({ approvedCases, municipalities }: HomeShellPr
               <p className="site-footer-heading">Navigate</p>
               <Link className="site-footer-link" href="/legal-framework">
                 Legal framework
+              </Link>
+              <Link className="site-footer-link" href="/news">
+                News
               </Link>
               <Link className="site-footer-link" href="/methodology">
                 Methodology

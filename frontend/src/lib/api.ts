@@ -4,6 +4,7 @@ import type {
   CaseRecord,
   MapMunicipalityRecord,
   MunicipalityRecord,
+  NewsRecord,
   PaginationRecord,
   SourceRecord
 } from "@/lib/contracts";
@@ -34,6 +35,10 @@ type CasesResponse = {
 type CaseDetailResponse = {
   case: CaseRecord;
   sources: SourceRecord[];
+};
+
+type NewsResponse = {
+  items: NewsRecord[];
 };
 
 function getApiBaseUrl(): string {
@@ -108,6 +113,25 @@ export async function getApprovedCaseBySlug(slug: string): Promise<CaseDetailRes
   }
 
   return payload.data;
+}
+
+export async function getPublicNews(params?: {
+  municipalityId?: string;
+  limit?: number;
+}): Promise<NewsRecord[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.municipalityId) {
+    searchParams.set("municipality_id", params.municipalityId);
+  }
+
+  if (params?.limit) {
+    searchParams.set("limit", String(params.limit));
+  }
+
+  const queryString = searchParams.toString();
+  const data = await fetchApi<NewsResponse>(`/api/news${queryString ? `?${queryString}` : ""}`);
+  return data.items;
 }
 
 export function mapMunicipalitiesToRecords(

@@ -2,6 +2,28 @@
   "schema_version": "phase0-v1",
   "items": [
     {
+      "id": "adjuntas",
+      "name": "Adjuntas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "adjuntas"
+    },
+    {
+      "id": "aguada",
+      "name": "Aguada",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "aguada"
+    },
+    {
       "id": "aguadilla",
       "name": "Aguadilla",
       "region": "west",
@@ -13,8 +35,459 @@
       "geojson_key": "aguadilla"
     },
     {
+      "id": "aguas-buenas",
+      "name": "Aguas Buenas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "aguas-buenas"
+    },
+    {
+      "id": "aibonito",
+      "name": "Aibonito",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "aibonito"
+    },
+    {
+      "id": "arecibo",
+      "name": "Arecibo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "arecibo"
+    },
+    {
+      "id": "arroyo",
+      "name": "Arroyo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "arroyo"
+    },
+    {
+      "id": "anasco",
+      "name": "Añasco",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "anasco"
+    },
+    {
+      "id": "barceloneta",
+      "name": "Barceloneta",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "barceloneta"
+    },
+    {
+      "id": "barranquitas",
+      "name": "Barranquitas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "barranquitas"
+    },
+    {
+      "id": "bayamon",
+      "name": "Bayamón",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "bayamon"
+    },
+    {
+      "id": "cabo-rojo",
+      "name": "Cabo Rojo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "cabo-rojo"
+    },
+    {
+      "id": "caguas",
+      "name": "Caguas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "caguas"
+    },
+    {
+      "id": "camuy",
+      "name": "Camuy",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "camuy"
+    },
+    {
+      "id": "canovanas",
+      "name": "Canóvanas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "canovanas"
+    },
+    {
+      "id": "carolina",
+      "name": "Carolina",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "carolina"
+    },
+    {
+      "id": "catano",
+      "name": "Cataño",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "catano"
+    },
+    {
+      "id": "cayey",
+      "name": "Cayey",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "cayey"
+    },
+    {
+      "id": "ceiba",
+      "name": "Ceiba",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "ceiba"
+    },
+    {
+      "id": "ciales",
+      "name": "Ciales",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "ciales"
+    },
+    {
+      "id": "cidra",
+      "name": "Cidra",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "cidra"
+    },
+    {
+      "id": "coamo",
+      "name": "Coamo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "coamo"
+    },
+    {
+      "id": "comerio",
+      "name": "Comerío",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "comerio"
+    },
+    {
+      "id": "corozal",
+      "name": "Corozal",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "corozal"
+    },
+    {
+      "id": "culebra",
+      "name": "Culebra",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "culebra"
+    },
+    {
+      "id": "dorado",
+      "name": "Dorado",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "dorado"
+    },
+    {
+      "id": "fajardo",
+      "name": "Fajardo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "fajardo"
+    },
+    {
+      "id": "florida",
+      "name": "Florida",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "florida"
+    },
+    {
+      "id": "guayama",
+      "name": "Guayama",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "guayama"
+    },
+    {
+      "id": "guayanilla",
+      "name": "Guayanilla",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "guayanilla"
+    },
+    {
+      "id": "guaynabo",
+      "name": "Guaynabo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "guaynabo"
+    },
+    {
+      "id": "gurabo",
+      "name": "Gurabo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "gurabo"
+    },
+    {
+      "id": "guanica",
+      "name": "Guánica",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "guanica"
+    },
+    {
+      "id": "hatillo",
+      "name": "Hatillo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "hatillo"
+    },
+    {
+      "id": "hormigueros",
+      "name": "Hormigueros",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "hormigueros"
+    },
+    {
+      "id": "humacao",
+      "name": "Humacao",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "humacao"
+    },
+    {
+      "id": "isabela",
+      "name": "Isabela",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "isabela"
+    },
+    {
+      "id": "jayuya",
+      "name": "Jayuya",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "jayuya"
+    },
+    {
+      "id": "juana-diaz",
+      "name": "Juana Díaz",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "juana-diaz"
+    },
+    {
+      "id": "juncos",
+      "name": "Juncos",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "juncos"
+    },
+    {
+      "id": "lajas",
+      "name": "Lajas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "lajas"
+    },
+    {
+      "id": "lares",
+      "name": "Lares",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "lares"
+    },
+    {
+      "id": "las-marias",
+      "name": "Las Marías",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "las-marias"
+    },
+    {
+      "id": "las-piedras",
+      "name": "Las Piedras",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "las-piedras"
+    },
+    {
       "id": "loiza",
-      "name": "Loiza",
+      "name": "Loíza",
       "region": "east",
       "coastal": true,
       "centroid": {
@@ -24,8 +497,162 @@
       "geojson_key": "loiza"
     },
     {
+      "id": "luquillo",
+      "name": "Luquillo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "luquillo"
+    },
+    {
+      "id": "manati",
+      "name": "Manatí",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "manati"
+    },
+    {
+      "id": "maricao",
+      "name": "Maricao",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "maricao"
+    },
+    {
+      "id": "maunabo",
+      "name": "Maunabo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "maunabo"
+    },
+    {
+      "id": "mayaguez",
+      "name": "Mayagüez",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "mayaguez"
+    },
+    {
+      "id": "moca",
+      "name": "Moca",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "moca"
+    },
+    {
+      "id": "morovis",
+      "name": "Morovis",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "morovis"
+    },
+    {
+      "id": "naguabo",
+      "name": "Naguabo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "naguabo"
+    },
+    {
+      "id": "naranjito",
+      "name": "Naranjito",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "naranjito"
+    },
+    {
+      "id": "orocovis",
+      "name": "Orocovis",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "orocovis"
+    },
+    {
+      "id": "patillas",
+      "name": "Patillas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "patillas"
+    },
+    {
+      "id": "penuelas",
+      "name": "Peñuelas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "penuelas"
+    },
+    {
+      "id": "ponce",
+      "name": "Ponce",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "ponce"
+    },
+    {
+      "id": "quebradillas",
+      "name": "Quebradillas",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "quebradillas"
+    },
+    {
       "id": "rincon",
-      "name": "Rincon",
+      "name": "Rincón",
       "region": "west",
       "coastal": true,
       "centroid": {
@@ -33,6 +660,28 @@
         "lng": -67.2499
       },
       "geojson_key": "rincon"
+    },
+    {
+      "id": "rio-grande",
+      "name": "Río Grande",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "rio-grande"
+    },
+    {
+      "id": "sabana-grande",
+      "name": "Sabana Grande",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "sabana-grande"
     },
     {
       "id": "salinas",
@@ -44,6 +693,171 @@
         "lng": -66.3032
       },
       "geojson_key": "salinas"
+    },
+    {
+      "id": "san-german",
+      "name": "San Germán",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "san-german"
+    },
+    {
+      "id": "san-juan",
+      "name": "San Juan",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "san-juan"
+    },
+    {
+      "id": "san-lorenzo",
+      "name": "San Lorenzo",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "san-lorenzo"
+    },
+    {
+      "id": "san-sebastian",
+      "name": "San Sebastián",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "san-sebastian"
+    },
+    {
+      "id": "santa-isabel",
+      "name": "Santa Isabel",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "santa-isabel"
+    },
+    {
+      "id": "toa-alta",
+      "name": "Toa Alta",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "toa-alta"
+    },
+    {
+      "id": "toa-baja",
+      "name": "Toa Baja",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "toa-baja"
+    },
+    {
+      "id": "trujillo-alto",
+      "name": "Trujillo Alto",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "trujillo-alto"
+    },
+    {
+      "id": "utuado",
+      "name": "Utuado",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "utuado"
+    },
+    {
+      "id": "vega-alta",
+      "name": "Vega Alta",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "vega-alta"
+    },
+    {
+      "id": "vega-baja",
+      "name": "Vega Baja",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "vega-baja"
+    },
+    {
+      "id": "vieques",
+      "name": "Vieques",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "vieques"
+    },
+    {
+      "id": "villalba",
+      "name": "Villalba",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "villalba"
+    },
+    {
+      "id": "yabucoa",
+      "name": "Yabucoa",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "yabucoa"
+    },
+    {
+      "id": "yauco",
+      "name": "Yauco",
+      "region": "islandwide",
+      "coastal": false,
+      "centroid": {
+        "lat": 18.2208,
+        "lng": -66.5901
+      },
+      "geojson_key": "yauco"
     }
   ]
 }

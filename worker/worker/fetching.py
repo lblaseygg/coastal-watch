@@ -2,39 +2,79 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import httpx
-from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
-from worker.utils import sha256_text, utcnow
+from worker.utils import infer_publisher_from_url, sha256_text, utcnow
 
 from app.models import Article
+from tavily import TavilyClient
 
 
-def clean_html_document(html: str) -> tuple[str, str | None, str | None]:
-    soup = BeautifulSoup(html, "html.parser")
+@dataclass
+class ExtractResult:
+    url: str
+    raw_content: str
+    title: str | None = None
 
-    for tag in soup(["script", "style", "noscript", "svg", "iframe"]):
-        tag.decompose()
 
-    title = soup.title.string.strip() if soup.title and soup.title.string else None
-    language = soup.html.get("lang") if soup.html else None
+def read_value(item: object, key: str) -> str | None:
+    if isinstance(item, dict):
+        value = item.get(key)
+    else:
+        value = getattr(item, key, None)
+    return str(value) if value is not None else None
 
-    blocks: list[str] = []
-    for node in soup.find_all(["p", "li", "h1", "h2", "h3"]):
-        text = " ".join(node.get_text(" ", strip=True).split())
-        if len(text) >= 40:
-            blocks.append(text)
 
-    if not blocks:
-        body_text = " ".join(soup.get_text(" ", strip=True).split())
-        blocks = [body_text] if body_text else []
+class TavilyExtractClient:
+    def __init__(self) -> None:
+        if not settings.tavily_api_key:
+            raise ValueError("TAVILY_API_KEY is not configured")
 
-    cleaned_text = "\n\n".join(dict.fromkeys(blocks)).strip()
-    return cleaned_text[:20000], title, language
+        self._client = TavilyClient(api_key=settings.tavily_api_key)
+
+    def extract(self, urls: list[str]) -> tuple[list[ExtractResult], set[str]]:
+        payload = self._client.extract(
+            urls=urls,
+            extract_depth=settings.tavily_extract_depth,
+            format=settings.tavily_extract_format,
+            timeout=settings.tavily_extract_timeout,
+            include_images=False,
+            include_favicon=False,
+        )
+
+        results: list[ExtractResult] = []
+        for item in payload.get("results", []):
+            url = read_value(item, "url")
+            raw_content = read_value(item, "raw_content") or read_value(item, "content")
+            if not url or not raw_content:
+                continue
+            results.append(
+                ExtractResult(
+                    url=url,
+                    raw_content=raw_content,
+                    title=read_value(item, "title"),
+                )
+            )
+
+        failed_urls: set[str] = set()
+        for item in payload.get("failed_results", []):
+            url = read_value(item, "url")
+            if url:
+                failed_urls.add(url)
+
+        return results, failed_urls
+
+
+def clean_extracted_content(content: str) -> str:
+    cleaned_text = content.strip()
+    return cleaned_text[:20000]
+
+
+def chunked_urls(urls: list[str], size: int = 20) -> list[list[str]]:
+    return [urls[index : index + size] for index in range(0, len(urls), size)]
 
 
 def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
@@ -48,33 +88,55 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
     if not articles:
         return {"cleaned": 0, "failed": 0}
 
+    client = TavilyExtractClient()
+    article_by_url = {article.url: article for article in articles}
     cleaned = 0
     failed = 0
-    with httpx.Client(
-        headers={"User-Agent": settings.worker_user_agent},
-        follow_redirects=True,
-        timeout=30.0,
-    ) as client:
-        for article in articles:
-            try:
-                response = client.get(article.url)
-                response.raise_for_status()
-                cleaned_text, title, language = clean_html_document(response.text)
-                if not cleaned_text:
-                    raise ValueError("No readable content found")
 
-                article.url = str(response.url)
-                article.title = (title or article.title)[:500]
-                article.language = (language or article.language or "und")[:16]
-                article.cleaned_text = cleaned_text
-                article.content_hash = sha256_text(cleaned_text)
-                article.accessed_at = utcnow()
-                article.fetch_status = "cleaned"
-                cleaned += 1
-            except Exception:
+    for url_batch in chunked_urls(list(article_by_url), size=20):
+        batch_articles = {url: article_by_url[url] for url in url_batch}
+        try:
+            results, failed_urls = client.extract(url_batch)
+        except Exception:
+            for article in batch_articles.values():
                 article.accessed_at = utcnow()
                 article.fetch_status = "failed"
                 failed += 1
+            continue
+
+        extracted_urls: set[str] = set()
+        for result in results:
+            article = batch_articles.get(result.url)
+            if article is None:
+                continue
+
+            extracted_urls.add(result.url)
+            cleaned_text = clean_extracted_content(result.raw_content)
+            if not cleaned_text:
+                article.accessed_at = utcnow()
+                article.fetch_status = "failed"
+                failed += 1
+                continue
+
+            article.url = result.url
+            article.publisher = infer_publisher_from_url(result.url)[:255]
+            article.title = (result.title or article.title)[:500]
+            article.language = (article.language if article.language and article.language != "und" else "es")[:16]
+            article.cleaned_text = cleaned_text
+            article.content_hash = sha256_text(cleaned_text)
+            article.accessed_at = utcnow()
+            article.fetch_status = "cleaned"
+            cleaned += 1
+
+        unresolved_urls = set(batch_articles) - extracted_urls
+        failed_urls.update(unresolved_urls)
+        for failed_url in failed_urls:
+            article = batch_articles.get(failed_url)
+            if article is None or article.fetch_status == "cleaned":
+                continue
+            article.accessed_at = utcnow()
+            article.fetch_status = "failed"
+            failed += 1
 
     session.commit()
     return {"cleaned": cleaned, "failed": failed}

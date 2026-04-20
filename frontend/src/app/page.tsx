@@ -1,14 +1,15 @@
 import HomeShell from "@/components/home-shell";
-import { getApprovedCases, getMapMunicipalities, mapMunicipalitiesToRecords } from "@/lib/api";
+import { getApprovedCases, getMapMunicipalities, getPublicNews, mapMunicipalitiesToRecords } from "@/lib/api";
 
 export default async function HomePage() {
-  const [mapMunicipalities, casesResponse] = await Promise.all([
+  const [mapMunicipalities, casesResponse, latestNews] = await Promise.all([
     getMapMunicipalities(),
-    getApprovedCases()
+    getApprovedCases(),
+    getPublicNews({ limit: 18 })
   ]);
 
   const municipalities = mapMunicipalitiesToRecords(mapMunicipalities);
   const cases = casesResponse.items;
 
-  return <HomeShell approvedCases={cases} municipalities={municipalities} />;
+  return <HomeShell approvedCases={cases} latestNews={latestNews} municipalities={municipalities} />;
 }

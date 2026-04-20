@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from worker.core.config import settings
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
-from worker.utils import make_id, slugify, utcnow
+from worker.utils import make_id, normalize_text, slugify, utcnow
 
-from app.models import Article, ArticleExtraction, Case, Municipality, ReviewQueueItem
+from app.models import Article, ArticleExtraction, Case, Municipality, ReviewQueueItem, case_article_links
 
 
 def unique_case_slug(session: Session, base_slug: str) -> str:
@@ -98,6 +99,68 @@ def build_reason_codes(extraction: ArticleExtraction, linked_case: Case | None) 
     return sorted(set(codes))
 
 
+def publisher_is_trusted(article: Article) -> bool:
+    publisher = normalize_text(article.publisher)
+    return any(
+        publisher.endswith(normalize_text(trusted_publisher))
+        for trusted_publisher in settings.auto_publish_trusted_publishers
+    )
+
+
+def title_is_excluded(article: Article) -> bool:
+    normalized_title = normalize_text(article.title)
+    return any(
+        normalize_text(keyword) in normalized_title
+        for keyword in settings.auto_publish_excluded_title_keywords
+    )
+
+
+def can_auto_publish(article: Article, extraction: ArticleExtraction, linked_case: Case | None) -> bool:
+    if linked_case is None:
+        return False
+
+    if extraction.relevance != "relevant":
+        return False
+
+    if not extraction.municipality_ids:
+        return False
+
+    if extraction.category not in settings.auto_publish_allowed_categories:
+        return False
+
+    if extraction.confidence_score < settings.auto_publish_min_confidence:
+        return False
+
+    if extraction.sensitive_flags:
+        return False
+
+    if not publisher_is_trusted(article):
+        return False
+
+    if title_is_excluded(article):
+        return False
+
+    return True
+
+
+def apply_auto_publish(current_case: Case, article: Article, extraction: ArticleExtraction) -> None:
+    now = utcnow()
+    current_case.publication_status = "approved"
+    current_case.review_state = "approved"
+    current_case.public_summary = extraction.extracted_summary
+    current_case.internal_summary = extraction.extracted_summary
+    current_case.review_reason_codes = ["auto_published", "trusted_source"]
+    current_case.confidence_score = extraction.confidence_score
+    current_case.last_updated_at = now
+
+    if article.id not in current_case.source_article_ids:
+        current_case.source_article_ids = [*current_case.source_article_ids, article.id]
+    if current_case.id not in article.linked_case_ids:
+        article.linked_case_ids = [*article.linked_case_ids, current_case.id]
+    if article not in current_case.articles:
+        current_case.articles.append(article)
+
+
 def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
     queued_extractions = session.scalars(
         select(ArticleExtraction)
@@ -108,6 +171,7 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
     existing_queue_entity_ids = set(session.scalars(select(ReviewQueueItem.entity_id)).all())
     created_review_items = 0
     created_cases = 0
+    auto_published = 0
 
     for extraction in queued_extractions:
         if extraction.id in existing_queue_entity_ids or extraction.relevance == "irrelevant":
@@ -122,6 +186,38 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
         linked_case = ensure_case_candidate(session, article, extraction, linked_case)
         if linked_case is not None and linked_case.id != prior_case_id and linked_case.publication_status == "pending_review":
             created_cases += 1
+
+        if linked_case is not None and can_auto_publish(article, extraction, linked_case):
+            apply_auto_publish(linked_case, article, extraction)
+            extraction.needs_review = False
+            now = utcnow()
+            review_item = ReviewQueueItem(
+                id=make_id("rev"),
+                entity_type="article_extraction",
+                entity_id=extraction.id,
+                status="approved",
+                reason_codes=["auto_published", "trusted_source"],
+                editable_fields=[],
+                assigned_to="worker",
+                decision_notes="Automatically published from a trusted source after passing auto-publish rules.",
+                audit_events=[
+                    {
+                        "action": "auto_approved",
+                        "actor_id": "worker",
+                        "at": now.isoformat().replace("+00:00", "Z"),
+                        "note": "Trusted-source article was published automatically.",
+                        "metadata": {
+                            "confidence_score": extraction.confidence_score,
+                            "publisher": article.publisher,
+                        },
+                    }
+                ],
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(review_item)
+            auto_published += 1
+            continue
 
         now = utcnow()
         review_item = ReviewQueueItem(
@@ -148,4 +244,32 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
         created_review_items += 1
 
     session.commit()
-    return {"review_items": created_review_items, "case_candidates": created_cases}
+    return {
+        "review_items": created_review_items,
+        "case_candidates": created_cases,
+        "auto_published": auto_published,
+    }
+
+
+def reset_extraction_state(session: Session) -> dict[str, int]:
+    article_count = 0
+    for article in session.scalars(select(Article)).all():
+        article.linked_case_ids = []
+        article_count += 1
+
+    review_item_count = session.scalar(select(func.count()).select_from(ReviewQueueItem)) or 0
+    extraction_count = session.scalar(select(func.count()).select_from(ArticleExtraction)) or 0
+    case_count = session.scalar(select(func.count()).select_from(Case)) or 0
+
+    session.execute(delete(case_article_links))
+    session.execute(delete(ReviewQueueItem))
+    session.execute(delete(ArticleExtraction))
+    session.execute(delete(Case))
+    session.commit()
+
+    return {
+        "articles_reset": article_count,
+        "review_items_cleared": int(review_item_count),
+        "extractions_cleared": int(extraction_count),
+        "cases_cleared": int(case_count),
+    }

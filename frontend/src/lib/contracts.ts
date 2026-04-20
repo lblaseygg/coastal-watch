@@ -71,6 +71,21 @@ export type ArticleRecord = {
 
 export type SourceRecord = Pick<ArticleRecord, "id" | "url" | "publisher" | "title" | "published_at">;
 
+export type NewsRecord = {
+  id: string;
+  url: string;
+  publisher: string;
+  title: string;
+  published_at: string;
+  excerpt: string;
+  municipality_ids: string[];
+  municipality_names: string[];
+  linked_case_ids: string[];
+  linked_case_slugs: string[];
+  linked_case_titles: string[];
+  category: CaseCategory | null;
+};
+
 export type MockCollection<T> = {
   schema_version: string;
   items: T[];

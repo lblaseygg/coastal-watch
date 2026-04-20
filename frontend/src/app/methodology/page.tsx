@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublicNav from "@/components/public-nav";
 
 const principles = [
   "Only approved cases appear on public pages and public API responses.",
@@ -17,6 +18,15 @@ export default function MethodologyPage() {
   return (
     <main className="page-shell methodology-page-shell">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <header className="hero-panel overflow-hidden px-2 py-4 md:px-3 md:py-5">
+          <div className="flex items-start justify-between gap-6">
+            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
+              Methodology
+            </p>
+            <PublicNav activeHref="/methodology" />
+          </div>
+        </header>
+
         <Link className="detail-back-link" href="/">
           Back to map
         </Link>

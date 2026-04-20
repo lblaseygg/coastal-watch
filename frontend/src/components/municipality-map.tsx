@@ -1,8 +1,10 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
+import type { NewsRecord } from "@/lib/contracts";
 
 type MunicipalityMapProps = {
+  hoveredMunicipalityNews: NewsRecord[];
   hoveredMunicipalityId: string | null;
   municipalityCounts: Map<string, { total: number; active: number }>;
   onHoverMunicipality: (municipalityId: string | null) => void;
@@ -20,6 +22,7 @@ function slugifyMunicipalityName(name: string): string {
 }
 
 function MunicipalityMap({
+  hoveredMunicipalityNews,
   hoveredMunicipalityId,
   municipalityCounts,
   onHoverMunicipality,
@@ -188,10 +191,26 @@ function MunicipalityMap({
       </div>
 
       <div
-        className={`municipality-cursor-tooltip ${hoveredMunicipalityName ? "is-visible" : ""}`}
+        className={`municipality-cursor-tooltip municipality-news-tooltip ${hoveredMunicipalityName ? "is-visible" : ""}`}
         ref={tooltipRef}
       >
-        {hoveredMunicipalityName}
+        {hoveredMunicipalityName ? (
+          <div className="municipality-news-tooltip-inner">
+            <p className="municipality-news-tooltip-title">{hoveredMunicipalityName}</p>
+            {hoveredMunicipalityNews.length > 0 ? (
+              <div className="municipality-news-tooltip-list">
+                {hoveredMunicipalityNews.slice(0, 2).map((item) => (
+                  <div className="municipality-news-tooltip-item" key={item.id}>
+                    <p className="municipality-news-tooltip-item-title">{item.title}</p>
+                    <p className="municipality-news-tooltip-item-meta">{item.publisher}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="municipality-news-tooltip-empty">No verified reporting yet.</p>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -200,6 +219,7 @@ function MunicipalityMap({
 export default memo(
   MunicipalityMap,
   (previousProps, nextProps) =>
+    previousProps.hoveredMunicipalityNews === nextProps.hoveredMunicipalityNews &&
     previousProps.hoveredMunicipalityId === nextProps.hoveredMunicipalityId &&
     previousProps.selectedMunicipalityId === nextProps.selectedMunicipalityId &&
     previousProps.municipalityCounts === nextProps.municipalityCounts &&

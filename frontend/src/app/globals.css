@@ -190,6 +190,7 @@ select {
 }
 
 .hero-nav-link {
+  position: relative;
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--muted-strong);
@@ -197,7 +198,31 @@ select {
   letter-spacing: 0.01em;
 }
 
+.hero-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 1px;
+  background: var(--ink-strong);
+  opacity: 0;
+  transform: scaleX(0.55);
+  transform-origin: center;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
 .hero-nav-link:hover {
+  color: var(--ink-strong);
+}
+
+.hero-nav-link:hover::after,
+.hero-nav-link.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.hero-nav-link.is-active {
   color: var(--ink-strong);
 }
 
@@ -444,6 +469,114 @@ select {
   line-height: 1.75;
 }
 
+.news-preview {
+  display: grid;
+  gap: 22px;
+  padding: 8px 2px 0;
+}
+
+.news-preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.news-preview-title {
+  margin: 0;
+  max-width: 40rem;
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  color: var(--ink-strong);
+}
+
+.news-preview-grid,
+.news-page-grid {
+  display: grid;
+  gap: 18px 24px;
+}
+
+.news-preview-card,
+.news-page-card {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.news-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.news-preview-card-title,
+.news-page-card-title {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
+  color: var(--ink-strong);
+}
+
+.news-preview-card-copy,
+.news-page-card-copy {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.news-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.news-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.news-preview-link {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+.news-preview-link:hover {
+  color: var(--muted-strong);
+}
+
+.news-page-card-title a:hover,
+.news-preview-card-title a:hover {
+  color: var(--muted-strong);
+}
+
 .site-footer {
   display: grid;
   gap: 24px;
@@ -592,6 +725,69 @@ select {
 
 .municipality-cursor-tooltip.is-visible {
   opacity: 1;
+}
+
+.municipality-news-tooltip {
+  min-width: 260px;
+  max-width: 320px;
+  padding: 0;
+  border-radius: 20px;
+  background: rgba(20, 20, 20, 0.96);
+  white-space: normal;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+
+.municipality-news-tooltip-inner {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.municipality-news-tooltip-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f9f6ef;
+}
+
+.municipality-news-tooltip-list {
+  display: grid;
+  gap: 10px;
+}
+
+.municipality-news-tooltip-item {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(249, 246, 239, 0.16);
+}
+
+.municipality-news-tooltip-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.municipality-news-tooltip-item-title,
+.municipality-news-tooltip-item-meta,
+.municipality-news-tooltip-empty {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.45;
+}
+
+.municipality-news-tooltip-item-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: #f9f6ef;
+}
+
+.municipality-news-tooltip-item-meta,
+.municipality-news-tooltip-empty {
+  font-size: 0.8rem;
+  color: rgba(249, 246, 239, 0.72);
 }
 
 .map-chip-stack {
@@ -1013,6 +1209,96 @@ select {
   color: var(--muted);
 }
 
+.news-page-shell {
+  overflow: visible;
+}
+
+.news-page-hero {
+  display: grid;
+  gap: 30px;
+}
+
+.news-page-hero-main {
+  display: grid;
+  gap: 16px;
+  max-width: 46rem;
+}
+
+.news-page-title {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  font-weight: 600;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: var(--ink-strong);
+}
+
+.news-page-copy,
+.news-page-section-copy {
+  margin: 0;
+  color: var(--muted);
+}
+
+.news-page-copy {
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.news-page-aside {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.news-page-aside-heading {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.news-page-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.85;
+}
+
+.news-page-framework {
+  display: grid;
+  gap: 20px;
+}
+
+.news-page-section-head {
+  display: grid;
+  gap: 8px;
+  max-width: 42rem;
+}
+
+.news-page-section-copy {
+  font-size: 0.96rem;
+  line-height: 1.8;
+}
+
+.news-page-card {
+  gap: 14px;
+}
+
+.news-page-card-title {
+  max-width: 34rem;
+  font-size: 1.3rem;
+  line-height: 1.28;
+}
+
+.news-page-card-copy {
+  max-width: 44rem;
+}
+
 .methodology-page-shell {
   overflow: visible;
 }
@@ -1192,7 +1478,17 @@ select {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .news-preview-grid,
+  .news-page-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .legal-page-hero {
+    grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.72fr);
+    align-items: end;
+  }
+
+  .news-page-hero {
     grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.72fr);
     align-items: end;
   }
