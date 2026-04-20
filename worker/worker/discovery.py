@@ -1,0 +1,149 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from worker.bootstrap import BACKEND_ROOT  # noqa: F401
+from worker.core.config import settings
+from worker.utils import infer_publisher_from_url, make_id, normalize_text, parse_optional_datetime, utcnow
+
+from app.models import Article
+from tavily import TavilyClient
+
+
+@dataclass
+class SearchResult:
+    url: str
+    title: str
+    snippet: str
+    publisher: str
+    published_at: str | None = None
+
+
+@dataclass
+class RelevanceMatch:
+    coastal_terms: set[str]
+    issue_terms: set[str]
+
+    @property
+    def is_relevant(self) -> bool:
+        return bool(self.coastal_terms) and bool(self.issue_terms)
+
+
+class TavilySearchClient:
+    def __init__(self) -> None:
+        if not settings.tavily_api_key:
+            raise ValueError("TAVILY_API_KEY is not configured")
+
+        self._client = TavilyClient(api_key=settings.tavily_api_key)
+
+    def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
+        payload = self._client.search(
+            query=query,
+            search_depth=settings.search_depth,
+            topic=settings.search_topic,
+            time_range=settings.search_time_range,
+            max_results=max_results,
+            include_domains=settings.discovery_domains or None,
+            exclude_domains=settings.discovery_exclude_domains or None,
+            include_raw_content=settings.discovery_include_raw_content,
+        )
+
+        results: list[SearchResult] = []
+        for item in payload.get("results", []):
+            url = read_value(item, "url")
+            title = read_value(item, "title")
+            if not url or not title:
+                continue
+
+            snippet = read_value(item, "raw_content") if settings.discovery_include_raw_content else None
+            if not snippet:
+                snippet = read_value(item, "content") or ""
+
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet=snippet,
+                    publisher=infer_publisher_from_url(url),
+                    published_at=read_value(item, "published_date") or read_value(item, "date"),
+                )
+            )
+
+        return results
+
+
+def read_value(item: object, key: str) -> str | None:
+    if isinstance(item, dict):
+        value = item.get(key)
+    else:
+        value = getattr(item, key, None)
+    return str(value) if value is not None else None
+
+
+def match_keywords(text: str, keywords: list[str]) -> set[str]:
+    normalized = normalize_text(text)
+    return {keyword for keyword in keywords if normalize_text(keyword) in normalized}
+
+
+def score_search_result(result: SearchResult) -> RelevanceMatch:
+    haystack = " ".join(
+        part for part in [result.title, result.snippet, result.publisher, result.url] if part
+    )
+    return RelevanceMatch(
+        coastal_terms=match_keywords(haystack, settings.discovery_coastal_keywords),
+        issue_terms=match_keywords(haystack, settings.discovery_issue_keywords),
+    )
+
+
+def upsert_discovered_article(session: Session, result: SearchResult) -> bool:
+    existing = session.scalar(select(Article).where(Article.url == result.url))
+    if existing is not None:
+        if not existing.title and result.title:
+            existing.title = result.title[:500]
+        if not existing.publisher and result.publisher:
+            existing.publisher = result.publisher[:255]
+        if result.published_at and existing.published_at is None:
+            parsed_date = parse_optional_datetime(result.published_at)
+            if parsed_date is not None:
+                existing.published_at = parsed_date
+        return False
+
+    now = utcnow()
+    article = Article(
+        id=make_id("art"),
+        url=result.url,
+        publisher=result.publisher[:255],
+        title=result.title[:500],
+        published_at=parse_optional_datetime(result.published_at) or now,
+        accessed_at=now,
+        language="und",
+        fetch_status="queued",
+        content_hash="",
+        cleaned_text=result.snippet,
+        linked_case_ids=[],
+        created_at=now,
+    )
+    session.add(article)
+    return True
+
+
+def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
+    client = TavilySearchClient()
+    discovered = 0
+    filtered_out = 0
+    seen_urls: set[str] = set()
+    for query in settings.discovery_queries:
+        for result in client.search(query=query, max_results=max_results):
+            if result.url in seen_urls:
+                continue
+            seen_urls.add(result.url)
+            if not score_search_result(result).is_relevant:
+                filtered_out += 1
+                continue
+            discovered += int(upsert_discovered_article(session, result))
+
+    session.commit()
+    return {"discovered": discovered, "filtered_out": filtered_out}

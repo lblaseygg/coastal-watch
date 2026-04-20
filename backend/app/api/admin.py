@@ -169,6 +169,7 @@ def apply_extraction_edits(
 
 def update_linked_case(
     current_case: Case | None,
+    article: Article | None,
     extraction: ArticleExtraction,
     queue_item: ReviewQueueItem,
     payload: ReviewDecisionInput,
@@ -184,6 +185,13 @@ def update_linked_case(
         current_case.public_summary = extraction.extracted_summary
         current_case.review_reason_codes = queue_item.reason_codes
         current_case.confidence_score = extraction.confidence_score
+        if article is not None:
+            if article.id not in current_case.source_article_ids:
+                current_case.source_article_ids = [*current_case.source_article_ids, article.id]
+            if current_case.id not in article.linked_case_ids:
+                article.linked_case_ids = [*article.linked_case_ids, current_case.id]
+            if article not in current_case.articles:
+                current_case.articles.append(article)
     elif decision_status == "rejected":
         current_case.publication_status = "rejected"
         current_case.review_state = "rejected"
@@ -247,6 +255,7 @@ def submit_review_decision(
         item.assigned_to = payload.assigned_to.strip() or None
 
     extraction: ArticleExtraction | None = None
+    article: Article | None = None
     linked_case: Case | None = None
     if item.entity_type == "article_extraction":
         extraction = db.get(ArticleExtraction, item.entity_id)
@@ -255,8 +264,9 @@ def submit_review_decision(
 
         applied_fields = apply_extraction_edits(extraction, item, payload.edits)
         extraction.needs_review = decision_status != "approved"
+        article = db.get(Article, extraction.article_id)
         linked_case = resolve_case_for_extraction(db, extraction)
-        update_linked_case(linked_case, extraction, item, payload, decision_status, now)
+        update_linked_case(linked_case, article, extraction, item, payload, decision_status, now)
 
     item.status = decision_status
     item.decision_notes = payload.note.strip() if payload.note else None
@@ -275,6 +285,8 @@ def submit_review_decision(
     db.add(item)
     if extraction is not None:
         db.add(extraction)
+    if article is not None:
+        db.add(article)
     if linked_case is not None:
         db.add(linked_case)
 

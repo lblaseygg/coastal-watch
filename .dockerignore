@@ -1,0 +1,16 @@
+.git
+.gitignore
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.DS_Store
+frontend/node_modules/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
+backend/.venv/
+worker/.venv/
+backend/coastal_watch.db
+*.db
+docs/
+plan.md
+ARCHITECTURE_DIRECTION.md

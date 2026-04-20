@@ -37,5 +37,18 @@ services:
     ports:
       - "3000:3000"
 
+  worker:
+    profiles: ["worker"]
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/coastal_watch
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+    command: ["python", "-m", "worker.cli", "run-once", "--limit", "10"]
+
 volumes:
   postgres-data:
