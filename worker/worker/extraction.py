@@ -65,12 +65,11 @@ CATEGORY_KEYWORDS = {
         "marina",
         "urbanizacion",
         "urbanización",
-        "reserva natural",
-        "area protegida",
-        "areas protegidas",
-        "bosque",
-        "corredor ecologico",
-        "corredor ecológico",
+        "expansion",
+        "expansión",
+        "paseo",
+        "ciclovia",
+        "ciclovía",
     ],
     "environmental_concern": [
         "erosion",
@@ -87,12 +86,6 @@ CATEGORY_KEYWORDS = {
         "shoreline erosion",
         "humedal",
         "humedales",
-        "bosque protegido",
-        "reserva natural",
-        "area protegida",
-        "areas protegidas",
-        "corredor ecologico",
-        "corredor ecológico",
         "estuario",
         "estuarios",
         "karso",
@@ -139,6 +132,85 @@ LEGAL_CLAIM_KEYWORDS = [
     "ilegal",
 ]
 
+ACCESS_SCOPE_KEYWORDS = [
+    "acceso",
+    "acceso publico",
+    "acceso público",
+    "entrada",
+    "cobro",
+    "cobran",
+    "tarifa",
+    "peaje",
+    "parking",
+    "estacionamiento",
+    "porton",
+    "portón",
+    "verja",
+    "bloqueo",
+    "cierre",
+    "barrera",
+    "privatizacion",
+    "privatización",
+]
+
+DEVELOPMENT_SCOPE_KEYWORDS = [
+    "construccion",
+    "construcción",
+    "construyen",
+    "construira",
+    "construirá",
+    "proyecto",
+    "obra",
+    "obras",
+    "edificacion",
+    "edificación",
+    "expansion",
+    "expansión",
+    "urbanizacion",
+    "urbanización",
+    "hotel",
+    "resort",
+    "condominio",
+    "complejo",
+    "villas",
+    "marina",
+    "muelle",
+    "paseo",
+    "ciclovia",
+    "ciclovía",
+]
+
+DESTRUCTION_SCOPE_KEYWORDS = [
+    "destruccion",
+    "destrucción",
+    "tala",
+    "relleno",
+    "excavacion",
+    "excavación",
+    "remocion",
+    "remoción",
+    "dragado",
+    "demolicion",
+    "demolición",
+    "impacto ambiental",
+    "afecta",
+    "afecta",
+    "afectado",
+    "afectada",
+]
+
+PERMIT_SCOPE_KEYWORDS = [
+    "permiso",
+    "permisos",
+    "ogpe",
+    "drna",
+    "consulta de ubicacion",
+    "consulta de ubicación",
+    "declaracion de impacto ambiental",
+    "declaración de impacto ambiental",
+    "uso de terreno",
+]
+
 SUMMARY_NOISE_KEYWORDS = [
     "publicidad",
     "suscribete",
@@ -178,6 +250,80 @@ LOCATION_ALIASES = {
     "caja de muertos": "ponce",
     "islote caja de muertos": "ponce",
     "isla caja de muertos": "ponce",
+    "esencia": "cabo-rojo",
+    "sol y playa": "rincon",
+    "la parguera": "lajas",
+    "buye": "cabo-rojo",
+    "combate": "cabo-rojo",
+    "boqueron": "cabo-rojo",
+    "boquerón": "cabo-rojo",
+    "playa sucia": "cabo-rojo",
+    "la playuela": "cabo-rojo",
+    "joyuda": "cabo-rojo",
+    "bahia salinas": "cabo-rojo",
+    "bahía salinas": "cabo-rojo",
+    "punta melones": "cabo-rojo",
+    "refugio de vida silvestre cabo rojo": "cabo-rojo",
+    "domes": "rincon",
+    "sandy beach": "rincon",
+    "tres palmas": "rincon",
+    "punta higuero": "rincon",
+    "corcega": "rincon",
+    "córcega": "rincon",
+    "marias": "rincon",
+    "marías": "rincon",
+    "jobos": "isabela",
+    "shacks": "isabela",
+    "guajataca": "quebradillas",
+    "crash boat": "aguadilla",
+    "survival beach": "aguadilla",
+    "peña blanca": "aguadilla",
+    "la monserrate": "luquillo",
+    "balneario la monserrate": "luquillo",
+    "la pared": "luquillo",
+    "seven seas": "fajardo",
+    "las cabezas de san juan": "fajardo",
+    "cabezas de san juan": "fajardo",
+    "medio mundo y dagao": "ceiba",
+    "bahia de jobos": "salinas",
+    "bahía de jobos": "salinas",
+    "mar negro": "salinas",
+    "mata la gata": "lajas",
+    "cayo caracoles": "lajas",
+    "la jungla": "loiza",
+    "vacia talega": "loiza",
+    "vacía talega": "loiza",
+    "aviones": "loiza",
+    "isla verde": "carolina",
+    "piñones": "loiza",
+    "ocean park": "san-juan",
+    "escambron": "san-juan",
+    "escambrón": "san-juan",
+    "condado": "san-juan",
+    "punta las marias": "san-juan",
+    "punta las marías": "san-juan",
+    "tortuguero": "vega-baja",
+    "cerro gordo": "vega-alta",
+    "balneario de dorado": "dorado",
+    "palmas del mar": "humacao",
+    "bosque seco de guanica": "guanica",
+    "bosque seco de guánica": "guanica",
+    "gilligans": "guanica",
+    "gilligan": "guanica",
+    "cana gorda": "guanica",
+    "caña gorda": "guanica",
+    "ballena": "guanica",
+    "playa santa": "guanica",
+    "sun bay": "vieques",
+    "mosquito pier": "vieques",
+    "media luna": "vieques",
+    "navio": "vieques",
+    "navío": "vieques",
+    "flamenco": "culebra",
+    "playa flamenco": "culebra",
+    "zoni": "culebra",
+    "tamarindo": "culebra",
+    "tortuga beach": "culebra",
 }
 
 SITE_SIGNAL_KEYWORDS = sorted(
@@ -185,6 +331,76 @@ SITE_SIGNAL_KEYWORDS = sorted(
     | set(LOCATION_ALIASES.keys())
     | {"islote", "isla", "cayo", "cayos", "reserva", "bosque", "humedal", "manglar"}
 )
+
+PROTECTED_PLACE_KEYWORDS = [
+    "playa",
+    "playas",
+    "costa",
+    "costero",
+    "costera",
+    "litoral",
+    "zona maritimo terrestre",
+    "zona marítimo terrestre",
+    "zmt",
+    "reserva natural",
+    "area protegida",
+    "área protegida",
+    "bosque protegido",
+    "corredor ecologico",
+    "corredor ecológico",
+    "humedal",
+    "humedales",
+    "manglar",
+    "manglares",
+    "duna",
+    "dunas",
+    "arrecife",
+    "arrecifes",
+    "estuario",
+    "estuarios",
+    "dominio publico",
+    "dominio público",
+]
+
+CONFLICT_SCOPE_KEYWORDS = [
+    "ilegal",
+    "ilegales",
+    "denuncia",
+    "denuncian",
+    "denuncias",
+    "querella",
+    "demanda",
+    "controversia",
+    "controversial",
+    "oposicion",
+    "oposición",
+    "opositores",
+    "rechazo",
+    "amenaza",
+    "amenazas",
+    "afecta",
+    "afecta el acceso",
+    "afectado",
+    "afectada",
+    "bloqueo",
+    "cierre",
+    "obstruccion",
+    "obstrucción",
+    "privatizacion",
+    "privatización",
+    "destruccion",
+    "destrucción",
+    "relleno",
+    "tala",
+    "excavacion",
+    "excavación",
+    "impacto ambiental",
+    "violacion ambiental",
+    "violación ambiental",
+    "no estan legales",
+    "no están legales",
+    "limitar acceso",
+]
 
 
 @dataclass
@@ -200,19 +416,41 @@ class ExtractionDraft:
     needs_review: bool
 
 
-def detect_municipalities(text: str, municipalities: list[Municipality]) -> list[str]:
+def unique_preserving_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        ordered.append(value)
+    return ordered
+
+
+def detect_location_aliases(text: str, municipalities: list[Municipality]) -> list[str]:
     normalized = normalize_text(text)
-    matches: list[str] = []
     municipality_name_map = {
         municipality.id: normalize_text(municipality.name)
         for municipality in municipalities
     }
+    matches: list[str] = []
 
     for alias, municipality_id in LOCATION_ALIASES.items():
         if municipality_id not in municipality_name_map:
             continue
         if re.search(rf"(?<![a-z0-9]){re.escape(normalize_text(alias))}(?![a-z0-9])", normalized):
             matches.append(municipality_id)
+
+    return unique_preserving_order(matches)
+
+
+def detect_named_municipalities(text: str, municipalities: list[Municipality]) -> list[str]:
+    normalized = normalize_text(text)
+    matches: list[str] = []
+    municipality_name_map = {
+        municipality.id: normalize_text(municipality.name)
+        for municipality in municipalities
+    }
 
     for municipality in municipalities:
         municipality_name = municipality_name_map[municipality.id]
@@ -222,7 +460,37 @@ def detect_municipalities(text: str, municipalities: list[Municipality]) -> list
         ):
             matches.append(municipality.id)
 
-    return sorted(set(matches))
+    return unique_preserving_order(matches)
+
+
+def detect_primary_municipalities(article: Article, municipalities: list[Municipality]) -> list[str]:
+    title_text = article.title or ""
+    lead_sentences = split_sentences(article.cleaned_text)[:4]
+    lead_text = " ".join(lead_sentences)
+    title_and_lead = f"{title_text}. {lead_text}".strip()
+    full_text = f"{title_text}. {article.cleaned_text}".strip()
+
+    alias_matches = detect_location_aliases(title_and_lead, municipalities)
+    if alias_matches:
+        return alias_matches[:2]
+
+    title_matches = detect_named_municipalities(title_text, municipalities)
+    if 0 < len(title_matches) <= 2:
+        return title_matches
+
+    lead_matches = detect_named_municipalities(title_and_lead, municipalities)
+    if 0 < len(lead_matches) <= 2:
+        return lead_matches[:2]
+
+    alias_matches = detect_location_aliases(full_text, municipalities)
+    if alias_matches:
+        return alias_matches[:2]
+
+    full_matches = detect_named_municipalities(full_text, municipalities)
+    if 0 < len(full_matches) <= 2:
+        return full_matches[:2]
+
+    return []
 
 
 def score_categories(text: str) -> Counter[str]:
@@ -366,10 +634,20 @@ def build_case_title(article: Article, municipality_ids: list[str], category: st
 
 def classify_article(article: Article, municipalities: list[Municipality]) -> ExtractionDraft:
     combined_text = f"{article.title}. {article.cleaned_text}".strip()
-    municipality_ids = detect_municipalities(combined_text, municipalities)
+    municipality_ids = detect_primary_municipalities(article, municipalities)
     scores = score_categories(combined_text)
     category = scores.most_common(1)[0][0] if scores else "policy_or_permitting"
     site_signal = has_keyword_signal(combined_text, SITE_SIGNAL_KEYWORDS)
+    protected_place_signal = has_keyword_signal(combined_text, PROTECTED_PLACE_KEYWORDS)
+    access_signal = has_keyword_signal(combined_text, ACCESS_SCOPE_KEYWORDS)
+    development_signal = has_keyword_signal(combined_text, DEVELOPMENT_SCOPE_KEYWORDS)
+    destruction_signal = has_keyword_signal(combined_text, DESTRUCTION_SCOPE_KEYWORDS)
+    conflict_signal = has_keyword_signal(combined_text, CONFLICT_SCOPE_KEYWORDS)
+    permit_signal = has_keyword_signal(combined_text, PERMIT_SCOPE_KEYWORDS)
+    excluded_scope_signal = has_keyword_signal(combined_text, settings.discovery_excluded_keywords)
+    scope_signal = access_signal or development_signal or destruction_signal
+    permit_project_signal = permit_signal and (development_signal or destruction_signal)
+    tracker_scope_signal = access_signal or (protected_place_signal and (development_signal or destruction_signal or permit_project_signal) and conflict_signal)
 
     sensitivity_flags: list[str] = []
     normalized_text = normalize_text(combined_text)
@@ -379,10 +657,18 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         sensitivity_flags.append("legal_claim")
     if not site_signal:
         sensitivity_flags.append("broad_policy_context")
+    if not tracker_scope_signal:
+        sensitivity_flags.append("outside_tracker_scope")
+    if excluded_scope_signal:
+        sensitivity_flags.append("excluded_incident_context")
+    if site_signal and not protected_place_signal:
+        sensitivity_flags.append("unclear_protected_place")
 
-    if scores and municipality_ids and site_signal:
+    if excluded_scope_signal:
+        relevance = "irrelevant"
+    elif scores and municipality_ids and site_signal and protected_place_signal and tracker_scope_signal:
         relevance = "relevant"
-    elif scores and site_signal:
+    elif scores and site_signal and protected_place_signal and tracker_scope_signal:
         relevance = "unclear"
     else:
         relevance = "irrelevant"
@@ -394,10 +680,18 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         confidence += min(0.18, 0.06 * max(scores.values()))
     if site_signal:
         confidence += 0.08
+    if protected_place_signal:
+        confidence += 0.08
+    if tracker_scope_signal:
+        confidence += 0.08
+    if permit_project_signal:
+        confidence += 0.04
     if article.publisher.endswith(".gov") or ".gov" in article.publisher:
         confidence += 0.08
     if sensitivity_flags:
         confidence -= 0.12
+    if excluded_scope_signal:
+        confidence -= 0.2
 
     confidence = max(0.08, min(0.97, round(confidence, 2)))
     municipality_names = [municipality.name for municipality in municipalities if municipality.id in municipality_ids]

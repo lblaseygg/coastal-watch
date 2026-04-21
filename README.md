@@ -6,7 +6,8 @@ The current repo includes:
 - a public frontend in Next.js
 - a backend API in FastAPI
 - a PostgreSQL-backed Docker stack for local development
-- seeded sample data for municipalities, cases, articles, and review items
+- a worker that discovers, extracts, and routes public reporting into the system
+- full municipality seed data for Puerto Rico
 
 ## Quick Start
 
@@ -104,6 +105,28 @@ Backend URL:
 Health check:
 - `http://localhost:8000/health`
 
+### Worker
+
+The worker uses Tavily for discovery and page extraction, then applies Coastal Watch's
+local extraction and routing rules.
+
+Run the worker against the Docker Postgres database:
+
+```bash
+cd /Users/blasey/Developer/coastal-watch
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli run-once --max-results 8 --limit 20
+```
+
+Useful worker commands:
+
+```bash
+# discovery only
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli discover --max-results 8
+
+# rebuild extracted/routed state from already-cleaned articles
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli reprocess --limit 500
+```
+
 ### Frontend talking to local backend
 
 If you run both services locally outside Docker, start the frontend with:
@@ -119,13 +142,19 @@ API_BASE_URL=http://localhost:8000 npm run dev
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- mapsvg.com 
+- MapSVG municipality SVG map
 
 ### Backend
 - FastAPI
 - SQLAlchemy
 - Alembic
 - Pydantic
+
+### Worker
+- Tavily Search for discovery
+- Tavily Extract for article content
+- heuristic classification and summarization
+- rule-based routing for auto-publish vs review
 
 ### Database
 - PostgreSQL in Docker
@@ -137,22 +166,29 @@ API_BASE_URL=http://localhost:8000 npm run dev
 1. The frontend loads municipalities and approved cases from the API
 2. Users browse the Puerto Rico map
 3. Clicking a municipality opens its related cases
-4. Case detail pages show summaries and linked sources
+4. `/news` and municipality hover cards show public reporting linked to municipalities
+5. Case detail pages show summaries and linked sources
 
 ### Backend
 The API currently exposes public endpoints for:
 - map municipality data
 - case list data
 - case detail data
+- public news feed
 - health checks
+
+### Automation flow
+1. Tavily Search discovers candidate public reporting
+2. Tavily Extract retrieves article content
+3. The worker classifies municipality, category, and summary
+4. Trusted, high-confidence items auto-publish
+5. Ambiguous or sensitive items go to admin review
+6. The API exposes only public/approved records to the map and news feed
 
 ### Seed data
 The repo includes seed files for:
-- municipalities
-- cases
-- articles
-- article extractions
-- review queue items
+- all Puerto Rico municipalities
+- empty runtime seed datasets for cases, articles, extractions, and review items
 
 These are loaded by:
 
@@ -167,22 +203,27 @@ Implemented:
 - SVG municipality map
 - municipality case drawer
 - case detail pages
+- public news page and municipality hover news
 - public backend API
 - database models and migrations
 - Docker local stack
 - admin review and auth
+- automated discovery/extraction/routing worker
+- trusted-source auto-publish pipeline
 
 Still to do:
-- ingestion worker
 - tests and observability
 - AWS deployment
+- model-based extraction beyond the current heuristic worker
 
 ## Repo Structure
 
 ```text
 coastal-watch/
+├── docs/
 ├── frontend/
 ├── backend/
+├── worker/
 ├── docker-compose.yml
 └── README.md
 ```
@@ -191,6 +232,7 @@ coastal-watch/
 
 - The frontend currently uses a clean SVG map instead of Leaflet for the main public UI.
 - The backend container automatically runs migrations and seeds data on startup through `backend/docker-entrypoint.sh`.
+- The worker currently uses rule-based extraction and summarization; it is automated, but not yet model-based.
 - Local docs and planning files may exist in the repo but are not required to start the environment.
 
 ## License

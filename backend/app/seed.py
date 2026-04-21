@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -149,14 +150,24 @@ def clear_seeded_runtime_tables(session) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Seed Coastal Watch database data.")
+    parser.add_argument(
+        "--full-reset-runtime",
+        action="store_true",
+        help="Clear runtime tables and then seed municipalities plus runtime seed files.",
+    )
+    args = parser.parse_args()
+
     with SessionLocal() as session:
-        clear_seeded_runtime_tables(session)
+        if args.full_reset_runtime:
+            clear_seeded_runtime_tables(session)
         seed_municipalities(session)
-        seed_articles(session)
-        seed_cases(session)
-        seed_article_extractions(session)
-        seed_review_queue(session)
-        seed_case_article_links(session)
+        if args.full_reset_runtime:
+            seed_articles(session)
+            seed_cases(session)
+            seed_article_extractions(session)
+            seed_review_queue(session)
+            seed_case_article_links(session)
         session.commit()
 
 

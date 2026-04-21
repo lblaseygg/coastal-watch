@@ -26,10 +26,11 @@ class SearchResult:
 class RelevanceMatch:
     coastal_terms: set[str]
     issue_terms: set[str]
+    excluded_terms: set[str]
 
     @property
     def is_relevant(self) -> bool:
-        return bool(self.coastal_terms) and bool(self.issue_terms)
+        return bool(self.coastal_terms) and bool(self.issue_terms) and not bool(self.excluded_terms)
 
 
 class TavilySearchClient:
@@ -75,6 +76,36 @@ class TavilySearchClient:
         return results
 
 
+def build_discovery_queries() -> list[str]:
+    queries = list(settings.discovery_queries)
+    municipalities = settings.discovery_priority_municipalities
+    batch_size = max(0, settings.discovery_priority_batch_size)
+    if batch_size > 0 and municipalities:
+        offset = settings.discovery_priority_batch_offset % len(municipalities)
+        batched = municipalities[offset : offset + batch_size]
+        if len(batched) < batch_size:
+            batched.extend(municipalities[: batch_size - len(batched)])
+    else:
+        batched = municipalities
+
+    for municipality in batched:
+        for template in settings.discovery_access_query_templates:
+            queries.append(template.format(municipality=municipality))
+        for template in settings.discovery_development_query_templates:
+            queries.append(template.format(municipality=municipality))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for query in queries:
+        normalized = normalize_text(query)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(query)
+
+    return deduped
+
+
 def read_value(item: object, key: str) -> str | None:
     if isinstance(item, dict):
         value = item.get(key)
@@ -95,6 +126,7 @@ def score_search_result(result: SearchResult) -> RelevanceMatch:
     return RelevanceMatch(
         coastal_terms=match_keywords(haystack, settings.discovery_coastal_keywords),
         issue_terms=match_keywords(haystack, settings.discovery_issue_keywords),
+        excluded_terms=match_keywords(haystack, settings.discovery_excluded_keywords),
     )
 
 
@@ -135,7 +167,7 @@ def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
     discovered = 0
     filtered_out = 0
     seen_urls: set[str] = set()
-    for query in settings.discovery_queries:
+    for query in build_discovery_queries():
         for result in client.search(query=query, max_results=max_results):
             if result.url in seen_urls:
                 continue

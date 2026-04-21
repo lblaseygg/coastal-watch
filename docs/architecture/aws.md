@@ -22,8 +22,8 @@ flowchart LR
 
     EventBridge[EventBridge Scheduler] --> Worker[ECS Fargate<br/>Ingestion Worker]
 
-    Worker --> Search[Search API]
-    Worker --> AI[LLM API]
+    Worker --> Search[Tavily Search API]
+    Worker --> Extract[Tavily Extract API]
     Worker --> RDS
 ```
 
@@ -36,7 +36,7 @@ flowchart LR
 - Worker → ECS Fargate
 - Database → Amazon RDS (PostgreSQL)
 - Scheduler → EventBridge
-- External APIs → Search + LLM services
+- External APIs → Tavily Search + Tavily Extract
 
 ---
 
@@ -46,7 +46,7 @@ flowchart LR
 - The frontend communicates with the API hosted on ECS Fargate
 - The API reads and writes data to RDS
 - EventBridge triggers the ingestion worker every 24 hours
-- The worker processes new data and updates the system
+- The worker discovers reporting, extracts article content, and either auto-publishes trusted records or queues them for review
 
 ---
 

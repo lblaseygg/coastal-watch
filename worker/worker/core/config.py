@@ -16,17 +16,84 @@ class WorkerSettings(BaseSettings):
     worker_user_agent: str = "PuertoRicoCoastalWatchWorker/0.1"
     extraction_model_name: str = "heuristic-v1"
     discovery_queries: list[str] = [
-        "construccion en playas Puerto Rico",
-        "proyecto de construccion en la costa Puerto Rico",
+        "construccion ilegal en playas Puerto Rico",
+        "proyecto de construccion en la costa Puerto Rico acceso publico",
         "construccion en dunas o manglares Puerto Rico",
         "construccion en areas protegidas Puerto Rico",
-        "proyecto en reserva natural Puerto Rico",
+        "proyecto en reserva natural Puerto Rico construccion",
         "desarrollo en bosque protegido o corredor ecologico Puerto Rico",
         "destruccion de humedales o manglares por construccion Puerto Rico",
-        "cobran entrada a la playa Puerto Rico",
-        "cobro por acceso a la playa Puerto Rico",
-        "privatizacion de playas Puerto Rico",
-        "zona maritimo terrestre acceso playa Puerto Rico",
+        "cobran entrada a la playa Puerto Rico acceso publico",
+        "cobro por acceso a la playa Puerto Rico privatizacion",
+        "privatizacion de playas Puerto Rico acceso",
+        "zona maritimo terrestre acceso playa Puerto Rico construccion",
+        "obstruccion de acceso a la playa Puerto Rico",
+        "querella construccion en area protegida Puerto Rico",
+        "desarrollo turistico en reserva natural Puerto Rico",
+    ]
+    discovery_priority_municipalities: list[str] = [
+        "Aguada",
+        "Aguadilla",
+        "Añasco",
+        "Arecibo",
+        "Arroyo",
+        "Barceloneta",
+        "Cabo Rojo",
+        "Camuy",
+        "Carolina",
+        "Ceiba",
+        "Culebra",
+        "Dorado",
+        "Fajardo",
+        "Guánica",
+        "Guayama",
+        "Guayanilla",
+        "Hatillo",
+        "Humacao",
+        "Isabela",
+        "Juana Díaz",
+        "Lajas",
+        "Loíza",
+        "Luquillo",
+        "Manatí",
+        "Maunabo",
+        "Mayagüez",
+        "Naguabo",
+        "Patillas",
+        "Peñuelas",
+        "Ponce",
+        "Quebradillas",
+        "Rincón",
+        "Río Grande",
+        "Salinas",
+        "San Juan",
+        "Santa Isabel",
+        "Toa Baja",
+        "Vega Alta",
+        "Vega Baja",
+        "Vieques",
+        "Yabucoa",
+    ]
+    discovery_priority_batch_size: int = 5
+    discovery_priority_batch_offset: int = 0
+    discovery_access_query_templates: list[str] = [
+        "{municipality} acceso playa bloqueado",
+        "{municipality} obstruccion acceso playa",
+        "{municipality} servidumbre playa",
+        "{municipality} cobran acceso playa",
+        "{municipality} cobran estacionamiento playa acceso",
+        "{municipality} porton acceso playa",
+        "{municipality} verja acceso playa",
+        "{municipality} privatizacion playa",
+    ]
+    discovery_development_query_templates: list[str] = [
+        "{municipality} construccion costa",
+        "{municipality} proyecto construccion playa",
+        "{municipality} construccion area protegida",
+        "{municipality} proyecto reserva natural construccion",
+        "{municipality} manglar construccion",
+        "{municipality} humedal relleno",
+        "{municipality} dunas construccion",
     ]
     discovery_domains: list[str] = []
     discovery_exclude_domains: list[str] = []
@@ -73,6 +140,7 @@ class WorkerSettings(BaseSettings):
     discovery_issue_keywords: list[str] = [
         "acceso",
         "acceso publico",
+        "acceso público",
         "bloqueo",
         "cierre",
         "servidumbre",
@@ -116,9 +184,32 @@ class WorkerSettings(BaseSettings):
         "conservacion",
         "privatizacion",
     ]
+    discovery_excluded_keywords: list[str] = [
+        "asesinado",
+        "asesinato",
+        "ahogado",
+        "ahogamiento",
+        "muere ahogado",
+        "homicidio",
+        "cadaver",
+        "cadáver",
+        "fiscal de turno",
+        "division de homicidios",
+        "división de homicidios",
+        "cic de",
+        "agente",
+        "policia",
+        "policía",
+        "oleaje",
+        "rescatado",
+        "rescate",
+        "bañista",
+        "banista",
+        "fin de semana en la playa",
+    ]
     search_topic: str = "news"
     search_depth: str = "basic"
-    search_time_range: str = "month"
+    search_time_range: str = "year"
     discovery_include_raw_content: bool = False
     tavily_extract_depth: str = "basic"
     tavily_extract_format: str = "text"
@@ -142,7 +233,6 @@ class WorkerSettings(BaseSettings):
         "access_restriction",
         "development",
         "environmental_concern",
-        "policy_or_permitting",
     ]
     auto_publish_excluded_title_keywords: list[str] = ["opinion", "opinión", "editorial", "columna"]
 

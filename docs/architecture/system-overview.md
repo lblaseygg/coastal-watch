@@ -4,7 +4,7 @@ Coastal Watch is a civic intelligence platform that monitors coastal access and 
 
 ## What this system does
 
-The platform collects information from public sources, extracts structured data using AI, and routes uncertain or sensitive information through a human review process before publishing it to users.
+The platform collects information from public sources, extracts structured data through an automated worker, auto-publishes trusted high-confidence items, and routes uncertain or sensitive information through human review before publishing it to users.
 
 ---
 
@@ -19,25 +19,34 @@ sequenceDiagram
     participant API
     participant DB
     participant Worker
-    participant Search
-    participant AI
+    participant TavilySearch as Tavily Search
+    participant TavilyExtract as Tavily Extract
     participant Admin
 
     User->>Frontend: Open app
-    Frontend->>API: Request map/case data
+    Frontend->>API: Request map, case, and news data
     API->>DB: Read approved data
     DB-->>API: Return data
     API-->>Frontend: Response
 
-    Worker->>Search: Find new articles
-    Search-->>Worker: Return articles
-    Worker->>AI: Extract structured data
-    AI-->>Worker: Extraction result
-    Worker->>DB: Save/update cases
+    Worker->>TavilySearch: Discover candidate reporting
+    TavilySearch-->>Worker: URLs, titles, snippets
+    Worker->>TavilyExtract: Extract article content
+    TavilyExtract-->>Worker: Clean page text
+    Worker->>Worker: Classify municipality, category, summary
+    alt Trusted and high-confidence
+        Worker->>DB: Auto-publish article and linked case
+    else Ambiguous or sensitive
+        Worker->>DB: Create review item and pending case
+        Admin->>API: Review pending items
+        API->>DB: Read/write review data
+        DB-->>API: Updated records
+    end
 
-    Admin->>API: Review pending items
-    API->>DB: Read/write review data
-    DB-->>API: Updated records
+    Frontend->>API: Request refreshed public data
+    API->>DB: Read approved cases and news
+    DB-->>API: Return public records
+    API-->>Frontend: Updated response
 ```
 
 ---
@@ -47,19 +56,20 @@ sequenceDiagram
 1. User opens the app and requests map data
 2. Frontend calls the API
 3. API returns only approved cases from the database
-4. Worker runs every 24 hours to ingest new data
-5. Articles are fetched and cleaned
-6. AI extracts structured data
-7. Data is validated and stored
-8. Uncertain data goes to the review queue
-9. Admin reviews and approves or rejects items
-10. Approved data becomes public
+4. Worker discovers candidate reporting from Tavily Search
+5. Tavily Extract retrieves article content for queued URLs
+6. The worker applies municipality/category extraction and summary heuristics
+7. Trusted, high-confidence records auto-publish
+8. Uncertain or sensitive records go to the review queue
+9. Admin reviews and approves or rejects queued items
+10. Approved cases and articles become public through the API
 
 ---
 
 ## Key Principles
 
 - Source-backed data only
-- Human review before publication
+- Auto-publish only for trusted, high-confidence reporting
+- Human review for uncertain or sensitive publication decisions
 - Strict separation of public vs internal data
 - Full auditability

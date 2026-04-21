@@ -30,7 +30,6 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(null);
   const [renderedMunicipalityId, setRenderedMunicipalityId] = useState<string | null>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-  const [hoveredMunicipalityId, setHoveredMunicipalityId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -78,11 +77,6 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
   }, [latestNews]);
 
   const latestNewsPreview = useMemo(() => latestNews.slice(0, 6), [latestNews]);
-  const hoveredMunicipalityNews = useMemo(
-    () => (hoveredMunicipalityId ? newsByMunicipality.get(hoveredMunicipalityId) ?? [] : []),
-    [hoveredMunicipalityId, newsByMunicipality]
-  );
-
   const filterCases = (municipalityId: string | null) => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -117,10 +111,6 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
     [approvedCases, drawerMunicipalityId, searchQuery, statusFilter]
   );
 
-  const activeMunicipalityId = selectedMunicipalityId ?? hoveredMunicipalityId;
-  const activeMunicipality = activeMunicipalityId
-    ? municipalityById.get(activeMunicipalityId) ?? null
-    : null;
   const selectedMunicipality = drawerMunicipalityId
     ? municipalityById.get(drawerMunicipalityId) ?? null
     : null;
@@ -211,7 +201,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
       <div className="ambient-orb ambient-orb-left" />
       <div className="ambient-orb ambient-orb-right" />
 
-      <div className="relative mx-auto flex max-w-[1360px] flex-col gap-5">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-8">
         <header className="hero-panel overflow-hidden px-2 py-4 md:px-3 md:py-5">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-6">
@@ -285,7 +275,6 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
                   className="toolbar-link"
                   onClick={() => {
                     closeDrawer();
-                    setHoveredMunicipalityId(null);
                     setStatusFilter("all");
                     setSearchQuery("");
                   }}
@@ -301,10 +290,8 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
         <section>
           <div className="map-frame self-start overflow-hidden p-3 md:p-4">
             <MunicipalityMap
-              hoveredMunicipalityNews={hoveredMunicipalityNews}
-              hoveredMunicipalityId={hoveredMunicipalityId}
+              municipalityNews={newsByMunicipality}
               municipalityCounts={municipalityCounts}
-              onHoverMunicipality={setHoveredMunicipalityId}
               onSelectMunicipality={setSelectedMunicipalityId}
               selectedMunicipalityId={selectedMunicipalityId}
             />
