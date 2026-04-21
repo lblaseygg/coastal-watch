@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
+from worker.logging_utils import get_logger, log_event
 from worker.utils import infer_publisher_from_url, sha256_text, utcnow
 
 from app.models import Article
 from tavily import TavilyClient
+
+
+logger = get_logger("worker.fetching")
 
 
 @dataclass
@@ -68,6 +73,31 @@ class TavilyExtractClient:
         return results, failed_urls
 
 
+def extract_with_retry(client: TavilyExtractClient, urls: list[str]) -> tuple[list[ExtractResult], set[str]]:
+    last_error: Exception | None = None
+    attempts = max(1, settings.tavily_extract_retry_attempts)
+
+    for attempt in range(1, attempts + 1):
+        try:
+            return client.extract(urls)
+        except Exception as exc:
+            last_error = exc
+            log_event(
+                logger,
+                "fetch.batch_retry",
+                level=logging.WARNING if attempt < attempts else logging.ERROR,
+                urls=urls,
+                attempt=attempt,
+                retry_attempts=attempts,
+                error=str(exc),
+            )
+
+    if last_error is not None:
+        raise last_error
+
+    return [], set()
+
+
 def clean_extracted_content(content: str) -> str:
     cleaned_text = content.strip()
     return cleaned_text[:20000]
@@ -96,11 +126,20 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
     for url_batch in chunked_urls(list(article_by_url), size=20):
         batch_articles = {url: article_by_url[url] for url in url_batch}
         try:
-            results, failed_urls = client.extract(url_batch)
-        except Exception:
+            results, failed_urls = extract_with_retry(client, url_batch)
+        except Exception as exc:
             for article in batch_articles.values():
                 article.accessed_at = utcnow()
                 article.fetch_status = "failed"
+                log_event(
+                    logger,
+                    "fetch.article_failed",
+                    level=40,
+                    article_id=article.id,
+                    url=article.url,
+                    reason="extract_exception",
+                    error=str(exc),
+                )
                 failed += 1
             continue
 
@@ -115,6 +154,13 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
             if not cleaned_text:
                 article.accessed_at = utcnow()
                 article.fetch_status = "failed"
+                log_event(
+                    logger,
+                    "fetch.article_failed",
+                    article_id=article.id,
+                    url=article.url,
+                    reason="empty_content",
+                )
                 failed += 1
                 continue
 
@@ -126,6 +172,15 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
             article.content_hash = sha256_text(cleaned_text)
             article.accessed_at = utcnow()
             article.fetch_status = "cleaned"
+            log_event(
+                logger,
+                "fetch.article_cleaned",
+                article_id=article.id,
+                url=article.url,
+                publisher=article.publisher,
+                title=article.title,
+                content_length=len(cleaned_text),
+            )
             cleaned += 1
 
         unresolved_urls = set(batch_articles) - extracted_urls
@@ -136,6 +191,13 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
                 continue
             article.accessed_at = utcnow()
             article.fetch_status = "failed"
+            log_event(
+                logger,
+                "fetch.article_failed",
+                article_id=article.id,
+                url=article.url,
+                reason="extract_failed",
+            )
             failed += 1
 
     session.commit()

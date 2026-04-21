@@ -202,7 +202,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
       <div className="ambient-orb ambient-orb-right" />
 
       <div className="relative mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="hero-panel overflow-hidden px-2 py-4 md:px-3 md:py-5">
+        <header className="hero-panel overflow-hidden py-4 md:py-5">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-6">
               <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">

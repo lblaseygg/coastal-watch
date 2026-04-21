@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
+from worker.logging_utils import get_logger, log_event
 from worker.utils import infer_publisher_from_url, make_id, normalize_text, parse_optional_datetime, utcnow
 
 from app.models import Article
 from tavily import TavilyClient
+
+
+logger = get_logger("worker.discovery")
 
 
 @dataclass
@@ -74,6 +79,32 @@ class TavilySearchClient:
             )
 
         return results
+
+
+def search_with_retry(client: TavilySearchClient, query: str, max_results: int) -> list[SearchResult]:
+    last_error: Exception | None = None
+    attempts = max(1, settings.tavily_search_retry_attempts)
+
+    for attempt in range(1, attempts + 1):
+        try:
+            return client.search(query=query, max_results=max_results)
+        except Exception as exc:
+            last_error = exc
+            log_event(
+                logger,
+                "discovery.query_retry",
+                level=logging.WARNING if attempt < attempts else logging.ERROR,
+                query=query,
+                max_results=max_results,
+                attempt=attempt,
+                retry_attempts=attempts,
+                error=str(exc),
+            )
+
+    if last_error is not None:
+        raise last_error
+
+    return []
 
 
 def build_discovery_queries() -> list[str]:
@@ -141,6 +172,14 @@ def upsert_discovered_article(session: Session, result: SearchResult) -> bool:
             parsed_date = parse_optional_datetime(result.published_at)
             if parsed_date is not None:
                 existing.published_at = parsed_date
+        log_event(
+            logger,
+            "discovery.article_duplicate",
+            article_id=existing.id,
+            url=result.url,
+            publisher=result.publisher,
+            title=result.title,
+        )
         return False
 
     now = utcnow()
@@ -159,6 +198,14 @@ def upsert_discovered_article(session: Session, result: SearchResult) -> bool:
         created_at=now,
     )
     session.add(article)
+    log_event(
+        logger,
+        "discovery.article_queued",
+        article_id=article.id,
+        url=result.url,
+        publisher=result.publisher,
+        title=result.title,
+    )
     return True
 
 
@@ -168,14 +215,40 @@ def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
     filtered_out = 0
     seen_urls: set[str] = set()
     for query in build_discovery_queries():
-        for result in client.search(query=query, max_results=max_results):
+        query_discovered = 0
+        query_filtered = 0
+        for result in search_with_retry(client, query=query, max_results=max_results):
             if result.url in seen_urls:
                 continue
             seen_urls.add(result.url)
-            if not score_search_result(result).is_relevant:
+            match = score_search_result(result)
+            if not match.is_relevant:
                 filtered_out += 1
+                query_filtered += 1
+                log_event(
+                    logger,
+                    "discovery.article_filtered",
+                    query=query,
+                    url=result.url,
+                    publisher=result.publisher,
+                    title=result.title,
+                    coastal_terms=sorted(match.coastal_terms),
+                    issue_terms=sorted(match.issue_terms),
+                    excluded_terms=sorted(match.excluded_terms),
+                )
                 continue
-            discovered += int(upsert_discovered_article(session, result))
+            created = int(upsert_discovered_article(session, result))
+            discovered += created
+            query_discovered += created
+
+        log_event(
+            logger,
+            "discovery.query_complete",
+            query=query,
+            max_results=max_results,
+            discovered=query_discovered,
+            filtered_out=query_filtered,
+        )
 
     session.commit()
     return {"discovered": discovered, "filtered_out": filtered_out}

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { submitAdminDecision } from "@/lib/admin-api";
 import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { appUrl } from "@/lib/request-origin";
 
 export async function POST(
   request: NextRequest,
@@ -11,11 +12,12 @@ export async function POST(
   const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
   const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
 
-  const redirectUrl = new URL(`/admin/review/${params.id}`, request.url);
+  const redirectUrl = appUrl(request, `/admin/review/${params.id}`);
+  const queueRedirectUrl = appUrl(request, "/admin");
 
   if (!token || !actor) {
     redirectUrl.searchParams.set("error", "session_expired");
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(redirectUrl, 303);
   }
 
   const formData = await request.formData();
@@ -31,11 +33,15 @@ export async function POST(
       assigned_to: assignedTo || undefined,
       edits: editedSummary ? { extracted_summary: editedSummary } : {}
     });
-    redirectUrl.searchParams.set("success", action);
+    queueRedirectUrl.searchParams.set("success", action);
+    queueRedirectUrl.searchParams.set("status", "pending_review");
+    queueRedirectUrl.searchParams.set("refresh", Date.now().toString());
+    return NextResponse.redirect(queueRedirectUrl, 303);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to save review decision";
     redirectUrl.searchParams.set("error", message);
+    redirectUrl.searchParams.set("refresh", Date.now().toString());
   }
 
-  return NextResponse.redirect(redirectUrl);
+  return NextResponse.redirect(redirectUrl, 303);
 }

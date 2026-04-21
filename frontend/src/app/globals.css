@@ -318,6 +318,224 @@ select {
   transition: color 160ms ease, opacity 160ms ease;
 }
 
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.38rem 0.78rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.status-chip-pending {
+  background: rgba(248, 196, 90, 0.16);
+  border-color: rgba(180, 126, 22, 0.2);
+  color: #8a5f12;
+}
+
+.status-chip-approved {
+  background: rgba(61, 153, 112, 0.14);
+  border-color: rgba(39, 112, 79, 0.18);
+  color: #226748;
+}
+
+.status-chip-needs-edit {
+  background: rgba(76, 103, 172, 0.12);
+  border-color: rgba(56, 81, 141, 0.18);
+  color: #2f4a86;
+}
+
+.status-chip-rejected {
+  background: rgba(160, 62, 62, 0.12);
+  border-color: rgba(126, 36, 36, 0.2);
+  color: #7a2525;
+}
+
+.admin-status-panel {
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  padding: 1.15rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.admin-status-panel-pending {
+  background: linear-gradient(180deg, rgba(255, 247, 229, 0.96), rgba(255, 251, 242, 0.9));
+}
+
+.admin-status-panel-approved {
+  background: linear-gradient(180deg, rgba(236, 248, 241, 0.96), rgba(247, 252, 249, 0.9));
+}
+
+.admin-status-panel-needs-edit {
+  background: linear-gradient(180deg, rgba(236, 241, 252, 0.96), rgba(247, 249, 253, 0.9));
+}
+
+.admin-status-panel-rejected {
+  background: linear-gradient(180deg, rgba(251, 239, 239, 0.96), rgba(253, 248, 248, 0.9));
+}
+
+.admin-status-count {
+  margin: 0.9rem 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.08em;
+}
+
+.admin-status-count-pending {
+  color: #8a5f12;
+}
+
+.admin-status-count-approved {
+  color: #226748;
+}
+
+.admin-status-count-needs-edit {
+  color: #2f4a86;
+}
+
+.admin-status-count-rejected {
+  color: #7a2525;
+}
+
+.admin-review-card {
+  display: grid;
+  gap: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 249, 245, 0.9));
+  padding: 1.15rem 1.2rem;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.admin-review-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 20, 20, 0.14);
+  box-shadow: 0 16px 34px rgba(16, 24, 40, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 246, 242, 0.96));
+}
+
+.admin-manual-case-row {
+  display: grid;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.85rem 1rem;
+}
+
+.admin-filter-panel {
+  position: sticky;
+  top: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-filter-link {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-reason-pill {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.35rem 0.78rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-review-input,
+.admin-review-textarea {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20, 20, 20, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 248, 244, 0.96));
+  padding: 0.95rem 1rem;
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+  resize: vertical;
+}
+
+.admin-review-input:focus,
+.admin-review-textarea:focus {
+  border-color: rgba(0, 48, 73, 0.35);
+  box-shadow: 0 0 0 4px rgba(102, 155, 188, 0.14);
+  background: rgba(255, 255, 255, 0.99);
+}
+
+.admin-review-textarea::placeholder,
+.admin-review-input::placeholder {
+  color: rgba(93, 89, 82, 0.72);
+}
+
+.admin-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.admin-action-button {
+  border-radius: 12px;
+  padding: 0.78rem 1.05rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.admin-action-button:hover {
+  transform: translateY(-1px);
+}
+
+.admin-action-button-compact {
+  padding: 0.56rem 0.8rem;
+  font-size: 0.84rem;
+}
+
+.admin-action-button-approve {
+  background: #1f6b4c;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(31, 107, 76, 0.18);
+}
+
+.admin-action-button-needs-edit {
+  background: rgba(58, 85, 148, 0.1);
+  border-color: rgba(58, 85, 148, 0.18);
+  color: #2f4a86;
+}
+
+.admin-action-button-reject {
+  background: rgba(157, 52, 52, 0.1);
+  border-color: rgba(157, 52, 52, 0.18);
+  color: #7a2525;
+}
+
 .toolbar-button {
   display: inline-flex;
   min-height: 38px;

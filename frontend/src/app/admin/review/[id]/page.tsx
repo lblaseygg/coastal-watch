@@ -2,11 +2,24 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getAdminReviewItem } from "@/lib/admin-api";
+import AdminScrollRestoration from "@/components/admin-scroll-restoration";
 import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { AdminReviewDecisionForm } from "@/components/admin-review-decision-form";
+import PublicNav from "@/components/public-nav";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type ReviewDetailPageProps = {
   params: { id: string };
   searchParams?: { error?: string; success?: string };
+};
+
+const statusMeta: Record<string, { label: string; chipClassName: string }> = {
+  pending_review: { label: "Pending review", chipClassName: "status-chip status-chip-pending" },
+  approved: { label: "Approved", chipClassName: "status-chip status-chip-approved" },
+  needs_edit: { label: "Needs edit", chipClassName: "status-chip status-chip-needs-edit" },
+  rejected: { label: "Rejected", chipClassName: "status-chip status-chip-rejected" }
 };
 
 export default async function ReviewDetailPage({ params, searchParams }: ReviewDetailPageProps) {
@@ -34,7 +47,20 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
 
   return (
     <main className="page-shell">
+      <AdminScrollRestoration />
       <div className="mx-auto flex max-w-[1260px] flex-col gap-6">
+        <header className="hero-panel overflow-hidden py-4 md:py-5">
+          <div className="flex flex-col gap-6">
+            <div className="flex items-start justify-between gap-6">
+              <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
+                Admin
+              </p>
+
+              <PublicNav activeHref="/admin" />
+            </div>
+          </div>
+        </header>
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--muted)]">
@@ -69,12 +95,16 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_360px]">
           <div className="grid gap-5">
             <section className="panel px-6 py-6">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
-                <span>{item.status.replaceAll("_", " ")}</span>
-                <span>&bull;</span>
-                <span>{item.entity_type.replaceAll("_", " ")}</span>
-                <span>&bull;</span>
-                <span>{item.entity_id}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={statusMeta[item.status]?.chipClassName ?? "status-chip"}>
+                  {statusMeta[item.status]?.label ?? item.status.replaceAll("_", " ")}
+                </span>
+                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                  {item.entity_type.replaceAll("_", " ")}
+                </span>
+                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                  {item.entity_id}
+                </span>
               </div>
               <h2 className="mt-4 text-2xl font-semibold text-[var(--ink)]">
                 {item.extraction?.extracted_case_title ?? "Queued review item"}
@@ -85,7 +115,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
               <div className="mt-5 flex flex-wrap gap-2">
                 {item.reason_codes.map((reasonCode) => (
                   <span
-                    className="rounded-full border border-[var(--line)] bg-white px-3 py-1 text-xs font-medium text-[var(--muted)]"
+                    className="admin-reason-pill"
                     key={reasonCode}
                   >
                     {reasonCode.replaceAll("_", " ")}
@@ -96,69 +126,14 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
 
             <section className="panel px-6 py-6">
               <h3 className="text-lg font-semibold text-[var(--ink)]">Decision</h3>
-              <form
-                action={`/admin/review/${item.id}/decision`}
-                className="mt-5 grid gap-4"
-                method="post"
-              >
-                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                  Assign reviewer
-                  <input
-                    className="rounded-[12px] border border-[var(--line)] bg-white px-4 py-3 text-[var(--ink)] outline-none transition focus:border-[var(--ink)]"
-                    defaultValue={item.assigned_to ?? actor}
-                    name="assigned_to"
-                    type="text"
-                  />
-                </label>
-
-                {item.editable_fields.includes("extracted_summary") ? (
-                  <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                    Edited public summary
-                    <textarea
-                      className="min-h-[160px] rounded-[12px] border border-[var(--line)] bg-white px-4 py-3 text-[var(--ink)] outline-none transition focus:border-[var(--ink)]"
-                      defaultValue={item.extraction?.extracted_summary ?? ""}
-                      name="edited_summary"
-                    />
-                  </label>
-                ) : null}
-
-                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                  Reviewer note
-                  <textarea
-                    className="min-h-[120px] rounded-[12px] border border-[var(--line)] bg-white px-4 py-3 text-[var(--ink)] outline-none transition focus:border-[var(--ink)]"
-                    defaultValue={item.decision_notes ?? ""}
-                    name="note"
-                    placeholder="Explain the moderation decision or summarize what changed."
-                  />
-                </label>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    className="rounded-[10px] border border-[var(--ink)] bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                    name="action"
-                    type="submit"
-                    value="approve"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--soft)]"
-                    name="action"
-                    type="submit"
-                    value="needs_edit"
-                  >
-                    Needs edit
-                  </button>
-                  <button
-                    className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--soft)]"
-                    name="action"
-                    type="submit"
-                    value="reject"
-                  >
-                    Reject
-                  </button>
-                </div>
-              </form>
+              <AdminReviewDecisionForm
+                actionUrl={`/admin/review/${item.id}/decision`}
+                actor={actor}
+                assignedTo={item.assigned_to}
+                decisionNotes={item.decision_notes}
+                editableFields={item.editable_fields}
+                extractedSummary={item.extraction?.extracted_summary ?? ""}
+              />
             </section>
 
             {item.article ? (

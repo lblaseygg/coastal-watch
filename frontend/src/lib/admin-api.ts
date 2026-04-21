@@ -88,6 +88,35 @@ export type AdminReviewItemDetailRecord = AdminReviewItemSummaryRecord & {
     | null;
 };
 
+export type AdminManualCasePayload = {
+  title: string;
+  summary: string;
+  source_url: string;
+  source_title: string;
+  municipality_id: string;
+  first_reported_at: string;
+  last_reported_at?: string;
+  category?: string;
+  status?: string;
+};
+
+export type AdminManualCaseRecord = {
+  case: Pick<
+    CaseRecord,
+    | "id"
+    | "slug"
+    | "title"
+    | "municipality_id"
+    | "status"
+    | "category"
+    | "public_summary"
+    | "first_reported_at"
+    | "last_updated_at"
+  >;
+  municipality_name: string;
+  source: AdminReviewItemDetailRecord["article"] | null;
+};
+
 function getApiBaseUrl(): string {
   return process.env.API_BASE_URL ?? "http://localhost:8000";
 }
@@ -204,6 +233,71 @@ export async function submitAdminDecision(
   );
 
   return data.item;
+}
+
+export async function createAdminManualCase(
+  token: string,
+  actor: string,
+  payload: AdminManualCasePayload
+): Promise<{
+  case: CaseRecord;
+  article: AdminReviewItemDetailRecord["article"];
+}> {
+  return fetchAdminApi(`/api/admin/cases/manual`, {
+    token,
+    actor,
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function getAdminManualCases(
+  token: string,
+  actor: string
+): Promise<AdminManualCaseRecord[]> {
+  const data = await fetchAdminApi<{ items: AdminManualCaseRecord[] }>("/api/admin/cases/manual", {
+    token,
+    actor
+  });
+
+  return data.items;
+}
+
+export async function getAdminManualCase(
+  token: string,
+  actor: string,
+  caseId: string
+): Promise<AdminManualCaseRecord> {
+  const data = await fetchAdminApi<{ item: AdminManualCaseRecord }>(`/api/admin/cases/manual/${caseId}`, {
+    token,
+    actor
+  });
+
+  return data.item;
+}
+
+export async function updateAdminManualCase(
+  token: string,
+  actor: string,
+  caseId: string,
+  payload: AdminManualCasePayload
+): Promise<AdminManualCaseRecord> {
+  const data = await fetchAdminApi<{ item: AdminManualCaseRecord }>(`/api/admin/cases/manual/${caseId}`, {
+    token,
+    actor,
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+
+  return data.item;
+}
+
+export async function deleteAdminManualCase(token: string, actor: string, caseId: string): Promise<void> {
+  await fetchAdminApi(`/api/admin/cases/manual/${caseId}`, {
+    token,
+    actor,
+    method: "DELETE"
+  });
 }
 
 export function getAdminSessionCookies() {

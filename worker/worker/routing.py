@@ -1,13 +1,38 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+import re
+
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from worker.core.config import settings
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
+from worker.logging_utils import get_logger, log_event
 from worker.utils import make_id, normalize_text, slugify, utcnow
 
 from app.models import Article, ArticleExtraction, Case, Municipality, ReviewQueueItem, case_article_links
+
+
+logger = get_logger("worker.routing")
+
+TITLE_LINK_STOPWORDS = {
+    "ante",
+    "bajo",
+    "costa",
+    "costera",
+    "contra",
+    "desde",
+    "donde",
+    "entre",
+    "hacia",
+    "para",
+    "playa",
+    "playas",
+    "proyecto",
+    "sobre",
+    "zona",
+}
 
 
 def unique_case_slug(session: Session, base_slug: str) -> str:
@@ -19,27 +44,125 @@ def unique_case_slug(session: Session, base_slug: str) -> str:
     return slug
 
 
+def normalize_title_tokens(value: str) -> set[str]:
+    normalized = normalize_text(value)
+    tokens = re.split(r"[^a-z0-9]+", normalized)
+    return {
+        token
+        for token in tokens
+        if len(token) > 3 and token not in TITLE_LINK_STOPWORDS
+    }
+
+
+def title_similarity(left: str, right: str) -> float:
+    normalized_left = normalize_text(left)
+    normalized_right = normalize_text(right)
+    if normalized_left and normalized_right:
+        if normalized_left in normalized_right or normalized_right in normalized_left:
+            return 0.9
+
+    left_tokens = normalize_title_tokens(left)
+    right_tokens = normalize_title_tokens(right)
+    if not left_tokens or not right_tokens:
+        return 0.0
+
+    intersection = len(left_tokens & right_tokens)
+    union = len(left_tokens | right_tokens)
+    return intersection / union if union else 0.0
+
+
+def coerce_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def attach_article_to_case(linked_case: Case, article: Article, extraction: ArticleExtraction) -> None:
+    if article.id not in linked_case.source_article_ids:
+        linked_case.source_article_ids = [*linked_case.source_article_ids, article.id]
+    if linked_case.id not in article.linked_case_ids:
+        article.linked_case_ids = [*article.linked_case_ids, linked_case.id]
+    if article not in linked_case.articles:
+        linked_case.articles.append(article)
+    linked_case.last_updated_at = max(
+        coerce_utc(linked_case.last_updated_at),
+        coerce_utc(article.published_at),
+    )
+    linked_case.confidence_score = max(linked_case.confidence_score, extraction.confidence_score)
+    if linked_case.review_state == "pending_review":
+        linked_case.internal_summary = extraction.extracted_summary
+
+
+def find_duplicate_content_case(session: Session, article: Article) -> Case | None:
+    if not article.content_hash:
+        return None
+
+    duplicate_articles = session.scalars(
+        select(Article)
+        .where(Article.content_hash == article.content_hash, Article.id != article.id)
+        .order_by(Article.created_at.desc())
+        .limit(5)
+    ).all()
+
+    for duplicate in duplicate_articles:
+        for case_id in duplicate.linked_case_ids:
+            linked = session.get(Case, case_id)
+            if linked is not None:
+                return linked
+
+    return None
+
+
+def best_candidate_case(
+    session: Session,
+    extraction: ArticleExtraction,
+    article: Article,
+) -> Case | None:
+    if not extraction.municipality_ids:
+        return None
+
+    candidates = session.scalars(
+        select(Case)
+        .where(
+            Case.municipality_id.in_(extraction.municipality_ids),
+            Case.category == extraction.category,
+        )
+        .order_by(Case.last_updated_at.desc())
+        .limit(settings.case_link_candidate_limit)
+    ).all()
+
+    best_case: Case | None = None
+    best_score = 0.0
+    for candidate in candidates:
+        score = title_similarity(candidate.title, extraction.extracted_case_title)
+        score = max(score, title_similarity(candidate.title, article.title))
+        if article.id in candidate.source_article_ids:
+            score = max(score, 1.0)
+        if score > best_score:
+            best_case = candidate
+            best_score = score
+
+    if best_score >= settings.case_link_min_similarity:
+        return best_case
+
+    return None
+
+
 def find_linked_case(session: Session, article: Article, extraction: ArticleExtraction) -> Case | None:
     for case_id in article.linked_case_ids:
         linked = session.get(Case, case_id)
         if linked is not None:
             return linked
 
+    duplicate_case = find_duplicate_content_case(session, article)
+    if duplicate_case is not None:
+        return duplicate_case
+
     exact = session.scalar(select(Case).where(Case.title == extraction.extracted_case_title))
     if exact is not None:
         return exact
 
-    if extraction.municipality_ids:
-        return session.scalar(
-            select(Case)
-            .where(
-                Case.municipality_id == extraction.municipality_ids[0],
-                Case.category == extraction.category,
-            )
-            .order_by(Case.last_updated_at.desc())
-        )
-
-    return None
+    return best_candidate_case(session, extraction, article)
 
 
 def ensure_case_candidate(
@@ -49,7 +172,7 @@ def ensure_case_candidate(
     linked_case: Case | None,
 ) -> Case | None:
     if linked_case is not None:
-        article.linked_case_ids = [linked_case.id]
+        attach_article_to_case(linked_case, article, extraction)
         return linked_case
 
     if not extraction.municipality_ids:
@@ -83,8 +206,7 @@ def ensure_case_candidate(
         review_reason_codes=extraction.sensitive_flags,
         confidence_score=extraction.confidence_score,
     )
-    candidate.articles.append(article)
-    article.linked_case_ids = [candidate.id]
+    attach_article_to_case(candidate, article, extraction)
     session.add(candidate)
     return candidate
 
@@ -143,6 +265,33 @@ def can_auto_publish(article: Article, extraction: ArticleExtraction, linked_cas
     return True
 
 
+def auto_publish_blockers(
+    article: Article,
+    extraction: ArticleExtraction,
+    linked_case: Case | None,
+) -> list[str]:
+    blockers: list[str] = []
+
+    if linked_case is None:
+        blockers.append("missing_case_link")
+    if extraction.relevance != "relevant":
+        blockers.append("relevance_not_relevant")
+    if not extraction.municipality_ids:
+        blockers.append("missing_municipality")
+    if extraction.category not in settings.auto_publish_allowed_categories:
+        blockers.append("category_not_allowed")
+    if extraction.confidence_score < settings.auto_publish_min_confidence:
+        blockers.append("below_confidence_threshold")
+    if extraction.sensitive_flags:
+        blockers.append("has_sensitive_flags")
+    if not publisher_is_trusted(article):
+        blockers.append("untrusted_publisher")
+    if title_is_excluded(article):
+        blockers.append("excluded_title")
+
+    return blockers
+
+
 def apply_auto_publish(current_case: Case, article: Article, extraction: ArticleExtraction) -> None:
     now = utcnow()
     current_case.publication_status = "approved"
@@ -174,7 +323,28 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
     auto_published = 0
 
     for extraction in queued_extractions:
-        if extraction.id in existing_queue_entity_ids or extraction.relevance == "irrelevant":
+        if extraction.id in existing_queue_entity_ids:
+            log_event(
+                logger,
+                "routing.article_skipped",
+                extraction_id=extraction.id,
+                article_id=extraction.article_id,
+                reason="already_queued",
+            )
+            continue
+
+        if extraction.relevance == "irrelevant":
+            log_event(
+                logger,
+                "routing.article_rejected",
+                extraction_id=extraction.id,
+                article_id=extraction.article_id,
+                relevance=extraction.relevance,
+                category=extraction.category,
+                municipality_ids=extraction.municipality_ids,
+                confidence_score=extraction.confidence_score,
+                reason_codes=extraction.sensitive_flags or ["irrelevant"],
+            )
             continue
 
         article = session.get(Article, extraction.article_id)
@@ -186,6 +356,15 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
         linked_case = ensure_case_candidate(session, article, extraction, linked_case)
         if linked_case is not None and linked_case.id != prior_case_id and linked_case.publication_status == "pending_review":
             created_cases += 1
+            log_event(
+                logger,
+                "routing.case_candidate_created",
+                case_id=linked_case.id,
+                article_id=article.id,
+                extraction_id=extraction.id,
+                municipality_id=linked_case.municipality_id,
+                category=linked_case.category,
+            )
 
         if linked_case is not None and can_auto_publish(article, extraction, linked_case):
             apply_auto_publish(linked_case, article, extraction)
@@ -216,6 +395,18 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
                 updated_at=now,
             )
             session.add(review_item)
+            log_event(
+                logger,
+                "routing.article_auto_published",
+                article_id=article.id,
+                extraction_id=extraction.id,
+                case_id=linked_case.id,
+                municipality_ids=extraction.municipality_ids,
+                category=extraction.category,
+                confidence_score=extraction.confidence_score,
+                publisher=article.publisher,
+                reason_codes=["auto_published", "trusted_source"],
+            )
             auto_published += 1
             continue
 
@@ -241,6 +432,19 @@ def route_extractions(session: Session, limit: int = 20) -> dict[str, int]:
             updated_at=now,
         )
         session.add(review_item)
+        reason_codes = build_reason_codes(extraction, linked_case)
+        log_event(
+            logger,
+            "routing.article_queued_for_review",
+            article_id=article.id,
+            extraction_id=extraction.id,
+            case_id=linked_case.id if linked_case is not None else None,
+            municipality_ids=extraction.municipality_ids,
+            category=extraction.category,
+            confidence_score=extraction.confidence_score,
+            reason_codes=reason_codes,
+            auto_publish_blockers=auto_publish_blockers(article, extraction, linked_case),
+        )
         created_review_items += 1
 
     session.commit()

@@ -155,6 +155,18 @@ class ReviewDecisionInput(BaseModel):
     edits: dict[str, Any] = Field(default_factory=dict)
 
 
+class ManualCaseCreateInput(BaseModel):
+    title: str
+    summary: str
+    source_url: str
+    source_title: str
+    municipality_id: str
+    first_reported_at: datetime
+    last_reported_at: datetime | None = None
+    category: str = "development"
+    status: str = "reported"
+
+
 def success_payload(data: Any) -> dict[str, Any]:
     return Envelope(data=data).model_dump(mode="json")
 

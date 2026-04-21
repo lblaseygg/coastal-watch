@@ -14,7 +14,12 @@ class WorkerSettings(BaseSettings):
     database_url: str = f"sqlite:///{REPO_ROOT / 'backend' / 'coastal_watch.db'}"
     tavily_api_key: str | None = None
     worker_user_agent: str = "PuertoRicoCoastalWatchWorker/0.1"
+    worker_log_level: str = "INFO"
     extraction_model_name: str = "heuristic-v1"
+    tavily_search_retry_attempts: int = 3
+    tavily_extract_retry_attempts: int = 3
+    case_link_candidate_limit: int = 8
+    case_link_min_similarity: float = 0.34
     discovery_queries: list[str] = [
         "construccion ilegal en playas Puerto Rico",
         "proyecto de construccion en la costa Puerto Rico acceso publico",

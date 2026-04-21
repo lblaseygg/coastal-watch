@@ -9,9 +9,13 @@ from sqlalchemy.orm import Session
 
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
+from worker.logging_utils import get_logger, log_event
 from worker.utils import make_id, normalize_text, split_sentences, utcnow
 
 from app.models import Article, ArticleExtraction, Municipality
+
+
+logger = get_logger("worker.extraction")
 
 
 CATEGORY_KEYWORDS = {
@@ -657,7 +661,7 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         sensitivity_flags.append("legal_claim")
     if not site_signal:
         sensitivity_flags.append("broad_policy_context")
-    if not tracker_scope_signal:
+    if not municipality_ids or not tracker_scope_signal:
         sensitivity_flags.append("outside_tracker_scope")
     if excluded_scope_signal:
         sensitivity_flags.append("excluded_incident_context")
@@ -666,9 +670,9 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
 
     if excluded_scope_signal:
         relevance = "irrelevant"
-    elif scores and municipality_ids and site_signal and protected_place_signal and tracker_scope_signal:
+    elif municipality_ids and scores and site_signal and protected_place_signal and tracker_scope_signal:
         relevance = "relevant"
-    elif scores and site_signal and protected_place_signal and tracker_scope_signal:
+    elif municipality_ids and site_signal and protected_place_signal and tracker_scope_signal:
         relevance = "unclear"
     else:
         relevance = "irrelevant"
@@ -750,6 +754,20 @@ def extract_articles(session: Session, limit: int = 10) -> dict[str, int]:
             created_at=utcnow(),
         )
         session.add(extraction)
+        log_event(
+            logger,
+            "extraction.article_classified",
+            article_id=article.id,
+            url=article.url,
+            publisher=article.publisher,
+            title=article.title,
+            relevance=draft.relevance,
+            category=draft.category,
+            municipality_ids=draft.municipality_ids,
+            confidence_score=draft.confidence_score,
+            sensitive_flags=draft.sensitive_flags,
+            needs_review=draft.needs_review,
+        )
         created += 1
 
     session.commit()
