@@ -1,5 +1,6 @@
 import type { FeatureCollection } from "geojson";
 import municipalityGeoJson from "@/data/geojson/puerto-rico-municipalities";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import type {
   CaseRecord,
   MapMunicipalityRecord,
@@ -41,26 +42,50 @@ type NewsResponse = {
   items: NewsRecord[];
 };
 
-function getApiBaseUrl(): string {
-  return process.env.API_BASE_URL ?? "http://localhost:8000";
+const API_RETRY_ATTEMPTS = 3;
+const API_RETRY_DELAY_MS = 250;
+
+function wait(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
 }
 
 async function fetchApi<T>(path: string): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    cache: "no-store"
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    throw new Error(`API request failed for ${path} with status ${response.status}`);
+  for (let attempt = 1; attempt <= API_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}${path}`, {
+        cache: "no-store"
+      });
+
+      if (response.status >= 500 && attempt < API_RETRY_ATTEMPTS) {
+        await wait(API_RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API request failed for ${path} with status ${response.status}`);
+      }
+
+      const payload = (await response.json()) as ApiEnvelope<T>;
+
+      if (payload.error) {
+        throw new Error(payload.error.message);
+      }
+
+      return payload.data;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < API_RETRY_ATTEMPTS) {
+        await wait(API_RETRY_DELAY_MS * attempt);
+        continue;
+      }
+    }
   }
 
-  const payload = (await response.json()) as ApiEnvelope<T>;
-
-  if (payload.error) {
-    throw new Error(payload.error.message);
-  }
-
-  return payload.data;
+  throw lastError ?? new Error(`API request failed for ${path}`);
 }
 
 export async function getMapMunicipalities(): Promise<MapMunicipalityRecord[]> {
@@ -94,25 +119,44 @@ export async function getApprovedCases(params?: {
 }
 
 export async function getApprovedCaseBySlug(slug: string): Promise<CaseDetailResponse | null> {
-  const response = await fetch(`${getApiBaseUrl()}/api/cases/${slug}`, {
-    cache: "no-store"
-  });
+  let lastError: Error | null = null;
 
-  if (response.status === 404) {
-    return null;
+  for (let attempt = 1; attempt <= API_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/cases/${slug}`, {
+        cache: "no-store"
+      });
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (response.status >= 500 && attempt < API_RETRY_ATTEMPTS) {
+        await wait(API_RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API request failed for case ${slug} with status ${response.status}`);
+      }
+
+      const payload = (await response.json()) as ApiEnvelope<CaseDetailResponse>;
+
+      if (payload.error) {
+        throw new Error(payload.error.message);
+      }
+
+      return payload.data;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < API_RETRY_ATTEMPTS) {
+        await wait(API_RETRY_DELAY_MS * attempt);
+        continue;
+      }
+    }
   }
 
-  if (!response.ok) {
-    throw new Error(`API request failed for case ${slug} with status ${response.status}`);
-  }
-
-  const payload = (await response.json()) as ApiEnvelope<CaseDetailResponse>;
-
-  if (payload.error) {
-    throw new Error(payload.error.message);
-  }
-
-  return payload.data;
+  throw lastError ?? new Error(`API request failed for case ${slug}`);
 }
 
 export async function getPublicNews(params?: {

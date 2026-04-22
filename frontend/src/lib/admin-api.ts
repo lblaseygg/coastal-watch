@@ -1,4 +1,5 @@
 import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import type { CaseRecord } from "@/lib/contracts";
 
 type ApiEnvelope<T> = {
@@ -118,10 +119,6 @@ export type AdminManualCaseRecord = {
   municipality_names: string[];
   source: AdminReviewItemDetailRecord["article"] | null;
 };
-
-function getApiBaseUrl(): string {
-  return process.env.API_BASE_URL ?? "http://localhost:8000";
-}
 
 async function fetchAdminApi<T>(
   path: string,
