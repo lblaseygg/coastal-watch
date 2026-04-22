@@ -157,6 +157,40 @@ ACCESS_SCOPE_KEYWORDS = [
     "privatización",
 ]
 
+ACCESS_RESTRICTION_ACTION_KEYWORDS = [
+    "bloqueo",
+    "bloqueado",
+    "bloqueada",
+    "bloquean",
+    "obstruccion",
+    "obstrucción",
+    "cierre",
+    "cerrado",
+    "cerrada",
+    "cerraron",
+    "porton",
+    "portón",
+    "verja",
+    "barrera",
+    "privatizacion",
+    "privatización",
+    "limitar el acceso",
+    "limitar acceso",
+    "limita acceso",
+    "limita el acceso",
+    "restringe acceso",
+    "restringir acceso",
+    "impide acceso",
+    "impiden acceso",
+    "cobro",
+    "cobran",
+    "cobrando",
+    "tarifa",
+    "peaje",
+    "ticket",
+    "boleto",
+]
+
 DEVELOPMENT_SCOPE_KEYWORDS = [
     "construccion",
     "construcción",
@@ -514,6 +548,24 @@ def has_keyword_signal(text: str, keywords: list[str]) -> bool:
     return any(normalize_text(keyword) in normalized for keyword in keywords)
 
 
+def has_non_negated_keyword_signal(text: str, keywords: list[str]) -> bool:
+    normalized = normalize_text(text)
+    for keyword in keywords:
+        normalized_keyword = normalize_text(keyword)
+        start = 0
+        while True:
+            index = normalized.find(normalized_keyword, start)
+            if index < 0:
+                break
+            window = normalized[max(0, index - 40) : index]
+            if re.search(r"\b(?:sin|no)\b", window):
+                start = index + len(normalized_keyword)
+                continue
+            return True
+        
+    return False
+
+
 def select_claims(text: str, keywords: list[str], municipality_names: list[str]) -> list[dict[str, object]]:
     claims: list[dict[str, object]] = []
     keyword_pool = [normalize_text(keyword) for keyword in [*keywords, *municipality_names]]
@@ -644,14 +696,27 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
     site_signal = has_keyword_signal(combined_text, SITE_SIGNAL_KEYWORDS)
     protected_place_signal = has_keyword_signal(combined_text, PROTECTED_PLACE_KEYWORDS)
     access_signal = has_keyword_signal(combined_text, ACCESS_SCOPE_KEYWORDS)
+    access_restriction_signal = has_non_negated_keyword_signal(combined_text, ACCESS_RESTRICTION_ACTION_KEYWORDS)
     development_signal = has_keyword_signal(combined_text, DEVELOPMENT_SCOPE_KEYWORDS)
     destruction_signal = has_keyword_signal(combined_text, DESTRUCTION_SCOPE_KEYWORDS)
     conflict_signal = has_keyword_signal(combined_text, CONFLICT_SCOPE_KEYWORDS)
     permit_signal = has_keyword_signal(combined_text, PERMIT_SCOPE_KEYWORDS)
     excluded_scope_signal = has_keyword_signal(combined_text, settings.discovery_excluded_keywords)
-    scope_signal = access_signal or development_signal or destruction_signal
     permit_project_signal = permit_signal and (development_signal or destruction_signal)
-    tracker_scope_signal = access_signal or (protected_place_signal and (development_signal or destruction_signal or permit_project_signal) and conflict_signal)
+    access_tracker_signal = protected_place_signal and access_signal and access_restriction_signal
+    development_tracker_signal = (
+        protected_place_signal
+        and (development_signal or destruction_signal or permit_project_signal)
+        and (conflict_signal or destruction_signal or access_restriction_signal)
+    )
+    tracker_scope_signal = access_tracker_signal or development_tracker_signal
+
+    if access_tracker_signal:
+        category = "access_restriction"
+    elif development_tracker_signal and destruction_signal:
+        category = "environmental_concern"
+    elif development_tracker_signal:
+        category = "development"
 
     sensitivity_flags: list[str] = []
     normalized_text = normalize_text(combined_text)
@@ -667,6 +732,8 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         sensitivity_flags.append("excluded_incident_context")
     if site_signal and not protected_place_signal:
         sensitivity_flags.append("unclear_protected_place")
+    if access_signal and not access_restriction_signal:
+        sensitivity_flags.append("general_access_context")
 
     if excluded_scope_signal:
         relevance = "irrelevant"
@@ -688,6 +755,8 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         confidence += 0.08
     if tracker_scope_signal:
         confidence += 0.08
+    if access_restriction_signal:
+        confidence += 0.04
     if permit_project_signal:
         confidence += 0.04
     if article.publisher.endswith(".gov") or ".gov" in article.publisher:

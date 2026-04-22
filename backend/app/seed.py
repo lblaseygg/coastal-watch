@@ -68,6 +68,7 @@ def seed_cases(session) -> None:
                 slug=item["slug"],
                 title=item["title"],
                 municipality_id=item["municipality_id"],
+                municipality_ids=item.get("municipality_ids", [item["municipality_id"]]),
                 status=item["status"],
                 publication_status=item["publication_status"],
                 review_state=item["review_state"],

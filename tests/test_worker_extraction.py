@@ -98,6 +98,40 @@ def test_generic_policy_story_is_not_treated_as_tracker_scope() -> None:
     assert "outside_tracker_scope" in draft.sensitive_flags
 
 
+def test_access_guide_story_is_irrelevant_without_blocking_or_dispute() -> None:
+    article = make_article(
+        title="DRNA | Acceso público a la costa",
+        cleaned_text=(
+            "La guia orienta a la ciudadania sobre el acceso publico a la costa y resume "
+            "reglas generales sin describir bloqueo, verja, cobro o controversia concreta."
+        ),
+        publisher="drna.pr.gov",
+    )
+
+    draft = classify_article(article, sample_municipalities())
+
+    assert draft.relevance == "irrelevant"
+    assert "general_access_context" in draft.sensitive_flags
+
+
+def test_aguada_blocked_access_story_is_relevant() -> None:
+    article = make_article(
+        title="Municipio de Aguada va contra empresario que bloqueó acceso a playa",
+        cleaned_text=(
+            "El municipio denuncio un porton que bloquea el acceso publico a la playa "
+            "y la servidumbre costera en Aguada."
+        ),
+        publisher="primerahora.com",
+    )
+
+    municipalities = sample_municipalities() + [make_municipality("aguada", "Aguada")]
+    draft = classify_article(article, municipalities)
+
+    assert draft.relevance == "relevant"
+    assert draft.category == "access_restriction"
+    assert draft.municipality_ids == ["aguada"]
+
+
 def test_unrelated_development_story_is_irrelevant() -> None:
     article = make_article(
         title="Costará $22 millones: construcción aumentará capacidad militar del Fuerte Buchanan",
@@ -111,4 +145,19 @@ def test_unrelated_development_story_is_irrelevant() -> None:
 
     assert draft.relevance == "irrelevant"
     assert draft.municipality_ids == []
+    assert "outside_tracker_scope" in draft.sensitive_flags
+
+
+def test_conservation_story_without_project_or_blockade_is_irrelevant() -> None:
+    article = make_article(
+        title="Bosque del Pueblo cumple 30 años: instan a continuar la lucha de protección de terrenos en Puerto Rico",
+        cleaned_text=(
+            "La nota destaca esfuerzos de conservacion y educacion ambiental sin describir "
+            "construccion, destruccion, acceso bloqueado o proyecto especifico en un lugar costero."
+        ),
+    )
+
+    draft = classify_article(article, sample_municipalities())
+
+    assert draft.relevance == "irrelevant"
     assert "outside_tracker_scope" in draft.sensitive_flags

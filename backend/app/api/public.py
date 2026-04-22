@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import String, case as sql_case, cast, func, or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,12 +13,20 @@ from app.schemas import PublicCaseSummary, PublicNewsItem, PublicSource, success
 router = APIRouter(tags=["public"])
 
 
+def case_municipality_ids(current_case: Case) -> list[str]:
+    municipality_ids = list(current_case.municipality_ids or [])
+    if not municipality_ids and current_case.municipality_id:
+        municipality_ids = [current_case.municipality_id]
+    return municipality_ids
+
+
 def serialize_case(current_case: Case) -> dict:
     return PublicCaseSummary(
         id=current_case.id,
         slug=current_case.slug,
         title=current_case.title,
         municipality_id=current_case.municipality_id,
+        municipality_ids=case_municipality_ids(current_case),
         status=current_case.status,
         category=current_case.category,
         tags=current_case.tags,
@@ -33,7 +41,7 @@ def serialize_case(current_case: Case) -> dict:
     ).model_dump(mode="json")
 
 
-def serialize_news_item(article: Article) -> dict:
+def serialize_news_item(article: Article, municipality_names_by_id: dict[str, str]) -> dict:
     approved_cases = sorted(
         [linked_case for linked_case in article.cases if linked_case.publication_status == "approved"],
         key=lambda linked_case: linked_case.last_updated_at,
@@ -53,9 +61,17 @@ def serialize_news_item(article: Article) -> dict:
         linked_case_ids.append(linked_case.id)
         linked_case_slugs.append(linked_case.slug)
         linked_case_titles.append(linked_case.title)
-        if linked_case.municipality_id not in municipality_ids:
-            municipality_ids.append(linked_case.municipality_id)
-            municipality_names.append(linked_case.municipality.name if linked_case.municipality else linked_case.municipality_id)
+        for municipality_id in case_municipality_ids(linked_case):
+            if municipality_id not in municipality_ids:
+                municipality_ids.append(municipality_id)
+                municipality_names.append(
+                    municipality_names_by_id.get(
+                        municipality_id,
+                        linked_case.municipality.name
+                        if linked_case.municipality and municipality_id == linked_case.municipality_id
+                        else municipality_id,
+                    )
+                )
         if category is None:
             category = linked_case.category
 
@@ -77,50 +93,34 @@ def serialize_news_item(article: Article) -> dict:
 
 @router.get("/map")
 def get_map(db: Session = Depends(get_db)) -> dict:
-    query = (
-        select(
-            Municipality.id,
-            Municipality.name,
-            Municipality.geojson_key,
-            Municipality.centroid_lat,
-            Municipality.centroid_lng,
-            func.count(Case.id).label("total_cases"),
-            func.coalesce(
-                func.sum(sql_case((Case.status == "active", 1), else_=0)),
-                0,
-            ).label("active_cases"),
-        )
-        .outerjoin(
-            Case,
-            (Case.municipality_id == Municipality.id) & (Case.publication_status == "approved"),
-        )
-        .group_by(
-            Municipality.id,
-            Municipality.name,
-            Municipality.geojson_key,
-            Municipality.centroid_lat,
-            Municipality.centroid_lng,
-        )
-        .order_by(Municipality.name.asc())
-    )
+    municipalities = db.scalars(select(Municipality).order_by(Municipality.name.asc())).all()
+    approved_cases = db.scalars(select(Case).where(Case.publication_status == "approved")).all()
+    case_counts: dict[str, dict[str, int]] = {}
+    for current_case in approved_cases:
+        for municipality_id in case_municipality_ids(current_case):
+            counts = case_counts.setdefault(municipality_id, {"total": 0, "active": 0})
+            counts["total"] += 1
+            if current_case.status == "active":
+                counts["active"] += 1
 
-    municipalities = []
-    for row in db.execute(query):
-        total_cases = int(row.total_cases or 0)
-        active_cases = int(row.active_cases or 0)
+    items = []
+    for municipality in municipalities:
+        counts = case_counts.get(municipality.id, {"total": 0, "active": 0})
+        total_cases = counts["total"]
+        active_cases = counts["active"]
         highlight_status = "active" if active_cases > 0 else "monitoring" if total_cases > 0 else "none"
-        municipalities.append(
+        items.append(
             {
-                "id": row.id,
-                "name": row.name,
-                "geojson_key": row.geojson_key,
-                "centroid": {"lat": row.centroid_lat, "lng": row.centroid_lng},
+                "id": municipality.id,
+                "name": municipality.name,
+                "geojson_key": municipality.geojson_key,
+                "centroid": {"lat": municipality.centroid_lat, "lng": municipality.centroid_lng},
                 "case_counts": {"total": total_cases, "active": active_cases},
                 "highlight_status": highlight_status,
             }
         )
 
-    return success_payload({"municipalities": municipalities})
+    return success_payload({"municipalities": items})
 
 
 @router.get("/cases")
@@ -133,38 +133,32 @@ def list_cases(
     page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> dict:
-    filters = [Case.publication_status == "approved"]
+    query = select(Case).where(Case.publication_status == "approved").order_by(Case.last_updated_at.desc(), Case.title.asc())
+    cases = db.scalars(query).all()
 
-    if municipality_id:
-        filters.append(Case.municipality_id == municipality_id)
+    def matches(current_case: Case) -> bool:
+        if municipality_id and municipality_id not in case_municipality_ids(current_case):
+            return False
+        if status and current_case.status != status:
+            return False
+        if category and current_case.category != category:
+            return False
+        if q:
+            haystack = " ".join(
+                [
+                    current_case.title,
+                    current_case.public_summary,
+                    current_case.category,
+                    *current_case.tags,
+                ]
+            ).lower()
+            if q.strip().lower() not in haystack:
+                return False
+        return True
 
-    if status:
-        filters.append(Case.status == status)
-
-    if category:
-        filters.append(Case.category == category)
-
-    if q:
-        pattern = f"%{q.strip()}%"
-        filters.append(
-            or_(
-                Case.title.ilike(pattern),
-                Case.public_summary.ilike(pattern),
-                Case.category.ilike(pattern),
-                cast(Case.tags, String).ilike(pattern),
-            )
-        )
-
-    total_items = db.scalar(select(func.count()).select_from(Case).where(*filters)) or 0
-
-    query = (
-        select(Case)
-        .where(*filters)
-        .order_by(Case.last_updated_at.desc(), Case.title.asc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
-    items = [serialize_case(current_case) for current_case in db.scalars(query).all()]
+    filtered_cases = [current_case for current_case in cases if matches(current_case)]
+    total_items = len(filtered_cases)
+    items = [serialize_case(current_case) for current_case in filtered_cases[(page - 1) * page_size : page * page_size]]
     total_pages = max(1, (total_items + page_size - 1) // page_size)
 
     return success_payload(
@@ -215,34 +209,28 @@ def list_news(
     limit: int = Query(default=12, ge=1, le=50),
     db: Session = Depends(get_db),
 ) -> dict:
-    article_id_query = (
-        select(Article.id)
-        .join(Article.cases)
-        .where(Case.publication_status == "approved")
-        .group_by(Article.id, Article.published_at, Article.created_at)
-        .order_by(Article.published_at.desc(), Article.created_at.desc())
-        .limit(limit)
-    )
-
-    if municipality_id:
-        article_id_query = article_id_query.where(Case.municipality_id == municipality_id)
-
-    article_ids = db.scalars(article_id_query).all()
-    if not article_ids:
-        return success_payload({"items": []})
-
     articles = db.scalars(
         select(Article)
         .options(selectinload(Article.cases).selectinload(Case.municipality))
-        .where(Article.id.in_(article_ids))
+        .join(Article.cases)
+        .where(Case.publication_status == "approved")
+        .group_by(Article.id)
+        .order_by(Article.published_at.desc(), Article.created_at.desc())
     ).all()
-    article_by_id = {article.id: article for article in articles}
-
-    items: list[dict] = []
-    for article_id in article_ids:
-        article = article_by_id.get(article_id)
-        if article is None:
+    filtered_articles = []
+    municipality_names_by_id = {
+        municipality.id: municipality.name
+        for municipality in db.scalars(select(Municipality)).all()
+    }
+    for article in articles:
+        if municipality_id and not any(
+            municipality_id in case_municipality_ids(linked_case)
+            for linked_case in article.cases
+            if linked_case.publication_status == "approved"
+        ):
             continue
-        items.append(serialize_news_item(article))
+        filtered_articles.append(article)
+
+    items = [serialize_news_item(article, municipality_names_by_id) for article in filtered_articles[:limit]]
 
     return success_payload({"items": items})

@@ -41,6 +41,7 @@ class Case(Base):
     slug: Mapped[str] = mapped_column(String(255), unique=True)
     title: Mapped[str] = mapped_column(String(255))
     municipality_id: Mapped[str] = mapped_column(ForeignKey("municipalities.id"))
+    municipality_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     status: Mapped[str] = mapped_column(String(50))
     publication_status: Mapped[str] = mapped_column(String(50))
     review_state: Mapped[str] = mapped_column(String(50))

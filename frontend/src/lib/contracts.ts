@@ -35,6 +35,7 @@ export type CaseRecord = {
   slug: string;
   title: string;
   municipality_id: string;
+  municipality_ids: string[];
   status: CaseStatus;
   publication_status: PublicationStatus;
   review_state: ReviewState;

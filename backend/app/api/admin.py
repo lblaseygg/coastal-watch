@@ -85,6 +85,20 @@ def is_manual_case(current_case: Case) -> bool:
     )
 
 
+def case_municipality_ids(current_case: Case) -> list[str]:
+    municipality_ids = list(current_case.municipality_ids or [])
+    if not municipality_ids and current_case.municipality_id:
+        municipality_ids = [current_case.municipality_id]
+    return municipality_ids
+
+
+def municipality_name_map(db: Session, municipality_ids: list[str]) -> dict[str, str]:
+    if not municipality_ids:
+        return {}
+    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
+    return {municipality.id: municipality.name for municipality in municipalities}
+
+
 def get_primary_case_article(current_case: Case) -> Article | None:
     if not current_case.articles:
         return None
@@ -92,11 +106,16 @@ def get_primary_case_article(current_case: Case) -> Article | None:
     return sorted(current_case.articles, key=lambda article: article.published_at)[0]
 
 
-def serialize_manual_case(current_case: Case) -> dict[str, Any]:
+def serialize_manual_case(db: Session, current_case: Case) -> dict[str, Any]:
     source_article = get_primary_case_article(current_case)
+    municipality_ids = case_municipality_ids(current_case)
+    municipality_names_by_id = municipality_name_map(db, municipality_ids)
     return {
         "case": serialize_case(current_case),
-        "municipality_name": current_case.municipality.name if current_case.municipality else current_case.municipality_id,
+        "municipality_names": [
+            municipality_names_by_id.get(municipality_id, municipality_id)
+            for municipality_id in municipality_ids
+        ],
         "source": serialize_article_detail(source_article) if source_article is not None else None,
     }
 
@@ -289,6 +308,9 @@ def update_linked_case(
         current_case.public_summary = extraction.extracted_summary
         current_case.review_reason_codes = queue_item.reason_codes
         current_case.confidence_score = extraction.confidence_score
+        if extraction.municipality_ids:
+            current_case.municipality_ids = extraction.municipality_ids
+            current_case.municipality_id = extraction.municipality_ids[0]
         if article is not None:
             if article.id not in current_case.source_article_ids:
                 current_case.source_article_ids = [*current_case.source_article_ids, article.id]
@@ -406,9 +428,15 @@ def create_manual_case(
     db: Session = Depends(get_db),
     admin: AdminIdentity = Depends(require_admin),
 ) -> dict[str, Any]:
-    municipality = db.get(Municipality, payload.municipality_id)
-    if municipality is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Municipality not found")
+    municipality_ids = [municipality_id for municipality_id in payload.municipality_ids if municipality_id]
+    if not municipality_ids:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="At least one municipality is required")
+    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
+    municipality_by_id = {municipality.id: municipality for municipality in municipalities}
+    missing_municipalities = [municipality_id for municipality_id in municipality_ids if municipality_id not in municipality_by_id]
+    if missing_municipalities:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Municipality not found: {', '.join(missing_municipalities)}")
+    municipality = municipality_by_id[municipality_ids[0]]
 
     last_reported_at = payload.last_reported_at or payload.first_reported_at
 
@@ -455,6 +483,7 @@ def create_manual_case(
         slug=unique_case_slug(db, payload.title),
         title=payload.title.strip(),
         municipality_id=municipality.id,
+        municipality_ids=municipality_ids,
         status=payload.status,
         publication_status="approved",
         review_state="approved",
@@ -505,7 +534,7 @@ def list_manual_cases(
     for current_case in cases:
         if not is_manual_case(current_case):
             continue
-        items.append(serialize_manual_case(current_case))
+        items.append(serialize_manual_case(db, current_case))
 
     return success_payload({"items": items})
 
@@ -527,7 +556,7 @@ def get_manual_case(
     if not is_manual_case(current_case):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Case is not a manual admin entry")
 
-    return success_payload({"item": serialize_manual_case(current_case)})
+    return success_payload({"item": serialize_manual_case(db, current_case)})
 
 
 @router.put("/cases/manual/{case_id}")
@@ -548,9 +577,15 @@ def update_manual_case(
     if not is_manual_case(current_case):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Case is not a manual admin entry")
 
-    municipality = db.get(Municipality, payload.municipality_id)
-    if municipality is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Municipality not found")
+    municipality_ids = [municipality_id for municipality_id in payload.municipality_ids if municipality_id]
+    if not municipality_ids:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="At least one municipality is required")
+    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
+    municipality_by_id = {municipality.id: municipality for municipality in municipalities}
+    missing_municipalities = [municipality_id for municipality_id in municipality_ids if municipality_id not in municipality_by_id]
+    if missing_municipalities:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Municipality not found: {', '.join(missing_municipalities)}")
+    municipality = municipality_by_id[municipality_ids[0]]
 
     last_reported_at = payload.last_reported_at or payload.first_reported_at
     if last_reported_at < payload.first_reported_at:
@@ -602,6 +637,7 @@ def update_manual_case(
 
     current_case.title = payload.title.strip()
     current_case.municipality_id = municipality.id
+    current_case.municipality_ids = municipality_ids
     current_case.status = payload.status
     current_case.category = payload.category
     current_case.public_summary = payload.summary.strip()
@@ -622,7 +658,7 @@ def update_manual_case(
     db.refresh(current_case)
     db.refresh(article)
 
-    return success_payload({"item": serialize_manual_case(current_case)})
+    return success_payload({"item": serialize_manual_case(db, current_case)})
 
 
 @router.delete("/cases/manual/{case_id}")

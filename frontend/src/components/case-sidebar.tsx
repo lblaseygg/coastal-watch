@@ -18,7 +18,7 @@ export default function CaseSidebar({
 }: CaseSidebarProps) {
   return (
     <aside
-      className="case-drawer flex flex-col overflow-hidden"
+      className="case-drawer flex min-h-0 flex-col overflow-hidden"
       data-state={isVisible ? "open" : "closed"}
     >
       <div className="case-drawer-head px-5 py-5">
@@ -42,7 +42,7 @@ export default function CaseSidebar({
         </div>
       </div>
 
-      <div className="case-drawer-scroll flex-1 space-y-1 overflow-y-auto px-3 py-2">
+      <div className="case-drawer-scroll flex-1 min-h-0 space-y-1 overflow-y-auto px-3 py-2">
         {cases.length > 0 ? (
           cases.map((currentCase) => <CaseCard currentCase={currentCase} key={currentCase.id} />)
         ) : (

@@ -310,18 +310,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
 
               <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Municipality
-                <select className="admin-review-input" defaultValue="" name="municipality_id" required>
-                  <option disabled value="">
-                    Select a municipality
-                  </option>
-                  {municipalities.map((municipality) => (
-                    <option key={municipality.id} value={municipality.id}>
-                      {municipality.name}
-                    </option>
-                  ))}
-                </select>
+                Municipalities
               </label>
+              <fieldset className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-white p-4">
+                <legend className="sr-only">Municipalities</legend>
+                <p className="text-sm leading-6 text-[var(--muted)]">
+                  Select every municipality this manual case should appear in on the map.
+                </p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {municipalities.map((municipality) => (
+                    <label className="flex items-center gap-3 text-sm text-[var(--ink)]" key={municipality.id}>
+                      <input
+                        className="h-4 w-4 rounded border-[var(--line)] text-[var(--ink)]"
+                        name="municipality_ids"
+                        type="checkbox"
+                        value={municipality.id}
+                      />
+                      <span>{municipality.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
@@ -364,7 +373,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         {item.case.title}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                        {item.municipality_name} · {new Date(item.case.first_reported_at).toLocaleDateString()}
+                        {item.municipality_names.join(", ")} · {new Date(item.case.first_reported_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

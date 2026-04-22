@@ -49,4 +49,36 @@ def test_score_search_result_accepts_access_blocking_story() -> None:
 
     assert match.is_relevant
     assert "playa" in match.coastal_terms
-    assert "acceso" in match.issue_terms
+    assert "acceso" in match.access_terms
+    assert "porton" in match.blocking_terms
+
+
+def test_score_search_result_accepts_protected_land_construction_story() -> None:
+    result = SearchResult(
+        url="https://example.com/development",
+        title="Proyecto hotelero en zona marítimo terrestre de Cabo Rojo desata controversia",
+        snippet="Vecinos denuncian construccion en un area protegida y posible impacto sobre manglares.",
+        publisher="elnuevodia.com",
+    )
+
+    match = score_search_result(result)
+
+    assert match.is_relevant
+    assert "zona maritimo terrestre" in match.protected_terms
+    assert "construccion" in match.development_terms
+    assert "controversia" in match.conflict_terms
+
+
+def test_score_search_result_rejects_general_policy_story() -> None:
+    result = SearchResult(
+        url="https://example.com/policy",
+        title="Entidades alertan sobre riesgos de privatización con propuesta para redefinir la zona marítimo terrestre",
+        snippet="La medida legislativa generó debate sobre acceso a las playas sin identificar obra concreta ni municipio puntual.",
+        publisher="elnuevodia.com",
+    )
+
+    match = score_search_result(result)
+
+    assert not match.is_relevant
+    assert "acceso" in match.access_terms
+    assert not match.blocking_terms

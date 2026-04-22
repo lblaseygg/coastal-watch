@@ -152,20 +152,28 @@ export default async function ManualCaseEditPage({
             </div>
 
             <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-              Municipality
-              <select
-                className="admin-review-input"
-                defaultValue={manualCase.case.municipality_id}
-                name="municipality_id"
-                required
-              >
-                {municipalities.map((municipality) => (
-                  <option key={municipality.id} value={municipality.id}>
-                    {municipality.name}
-                  </option>
-                ))}
-              </select>
+              Municipalities
             </label>
+            <fieldset className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-white p-4">
+              <legend className="sr-only">Municipalities</legend>
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                Keep this case linked to every municipality where it should show on the map.
+              </p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {municipalities.map((municipality) => (
+                  <label className="flex items-center gap-3 text-sm text-[var(--ink)]" key={municipality.id}>
+                    <input
+                      className="h-4 w-4 rounded border-[var(--line)] text-[var(--ink)]"
+                      defaultChecked={manualCase.case.municipality_ids.includes(municipality.id)}
+                      name="municipality_ids"
+                      type="checkbox"
+                      value={municipality.id}
+                    />
+                    <span>{municipality.name}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
             <div className="flex flex-wrap gap-3 pt-2">
               <button

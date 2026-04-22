@@ -89,6 +89,9 @@ def attach_article_to_case(linked_case: Case, article: Article, extraction: Arti
         coerce_utc(article.published_at),
     )
     linked_case.confidence_score = max(linked_case.confidence_score, extraction.confidence_score)
+    if extraction.municipality_ids:
+        linked_case.municipality_ids = extraction.municipality_ids
+        linked_case.municipality_id = extraction.municipality_ids[0]
     if linked_case.review_state == "pending_review":
         linked_case.internal_summary = extraction.extracted_summary
 
@@ -190,6 +193,7 @@ def ensure_case_candidate(
         slug=slug,
         title=extraction.extracted_case_title[:255],
         municipality_id=municipality.id,
+        municipality_ids=extraction.municipality_ids or [municipality.id],
         status="reported",
         publication_status="pending_review",
         review_state="pending_review",

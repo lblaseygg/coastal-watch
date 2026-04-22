@@ -77,6 +77,7 @@ export type AdminReviewItemDetailRecord = AdminReviewItemSummaryRecord & {
         | "slug"
         | "title"
         | "municipality_id"
+        | "municipality_ids"
         | "status"
         | "category"
         | "tags"
@@ -93,7 +94,7 @@ export type AdminManualCasePayload = {
   summary: string;
   source_url: string;
   source_title: string;
-  municipality_id: string;
+  municipality_ids: string[];
   first_reported_at: string;
   last_reported_at?: string;
   category?: string;
@@ -107,13 +108,14 @@ export type AdminManualCaseRecord = {
     | "slug"
     | "title"
     | "municipality_id"
+    | "municipality_ids"
     | "status"
     | "category"
     | "public_summary"
     | "first_reported_at"
     | "last_updated_at"
   >;
-  municipality_name: string;
+  municipality_names: string[];
   source: AdminReviewItemDetailRecord["article"] | null;
 };
 

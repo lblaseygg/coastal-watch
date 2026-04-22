@@ -21,20 +21,20 @@ class WorkerSettings(BaseSettings):
     case_link_candidate_limit: int = 8
     case_link_min_similarity: float = 0.34
     discovery_queries: list[str] = [
-        "construccion ilegal en playas Puerto Rico",
-        "proyecto de construccion en la costa Puerto Rico acceso publico",
+        "bloquean acceso a la playa Puerto Rico",
+        "porton o verja bloquea acceso a la playa Puerto Rico",
+        "servidumbre de acceso a la playa bloqueada Puerto Rico",
+        "cobran entrada para acceso a la playa Puerto Rico",
+        "privatizacion de acceso a la playa Puerto Rico",
+        "construccion ilegal en area protegida Puerto Rico",
+        "proyecto de construccion en reserva natural Puerto Rico",
+        "condominio o hotel en zona costera protegida Puerto Rico",
+        "relleno de humedal por construccion Puerto Rico",
+        "tala de manglar por construccion Puerto Rico",
         "construccion en dunas o manglares Puerto Rico",
-        "construccion en areas protegidas Puerto Rico",
-        "proyecto en reserva natural Puerto Rico construccion",
-        "desarrollo en bosque protegido o corredor ecologico Puerto Rico",
-        "destruccion de humedales o manglares por construccion Puerto Rico",
-        "cobran entrada a la playa Puerto Rico acceso publico",
-        "cobro por acceso a la playa Puerto Rico privatizacion",
-        "privatizacion de playas Puerto Rico acceso",
-        "zona maritimo terrestre acceso playa Puerto Rico construccion",
-        "obstruccion de acceso a la playa Puerto Rico",
-        "querella construccion en area protegida Puerto Rico",
-        "desarrollo turistico en reserva natural Puerto Rico",
+        "proyecto en zona maritimo terrestre Puerto Rico acceso publico",
+        "querella por construccion en area protegida Puerto Rico",
+        "desarrollo turistico en playa virgen Puerto Rico",
     ]
     discovery_priority_municipalities: list[str] = [
         "Aguada",
@@ -82,23 +82,24 @@ class WorkerSettings(BaseSettings):
     discovery_priority_batch_size: int = 5
     discovery_priority_batch_offset: int = 0
     discovery_access_query_templates: list[str] = [
+        "{municipality} bloquean acceso playa",
         "{municipality} acceso playa bloqueado",
-        "{municipality} obstruccion acceso playa",
-        "{municipality} servidumbre playa",
-        "{municipality} cobran acceso playa",
-        "{municipality} cobran estacionamiento playa acceso",
+        "{municipality} servidumbre acceso playa bloqueada",
+        "{municipality} cobran entrada acceso playa",
         "{municipality} porton acceso playa",
         "{municipality} verja acceso playa",
-        "{municipality} privatizacion playa",
+        "{municipality} camino acceso playa cerrado",
+        "{municipality} privatizacion acceso playa",
     ]
     discovery_development_query_templates: list[str] = [
-        "{municipality} construccion costa",
-        "{municipality} proyecto construccion playa",
-        "{municipality} construccion area protegida",
+        "{municipality} construccion ilegal area protegida",
+        "{municipality} proyecto construccion playa protegida",
         "{municipality} proyecto reserva natural construccion",
+        "{municipality} hotel condominio costa protegida",
         "{municipality} manglar construccion",
         "{municipality} humedal relleno",
         "{municipality} dunas construccion",
+        "{municipality} zona maritimo terrestre construccion",
     ]
     discovery_domains: list[str] = []
     discovery_exclude_domains: list[str] = []
@@ -184,9 +185,6 @@ class WorkerSettings(BaseSettings):
         "querella",
         "demanda",
         "proyecto",
-        "ambiental",
-        "proteccion",
-        "conservacion",
         "privatizacion",
     ]
     discovery_excluded_keywords: list[str] = [
@@ -211,6 +209,22 @@ class WorkerSettings(BaseSettings):
         "bañista",
         "banista",
         "fin de semana en la playa",
+        "guia",
+        "guía",
+        "que son",
+        "qué son",
+        "opinion",
+        "opinión",
+        "editorial",
+        "columna",
+        "arrestan",
+        "arrestado",
+        "turista",
+        "vacaciones",
+        "reapertura",
+        "aniversario",
+        "educacion ambiental",
+        "educación ambiental",
     ]
     search_topic: str = "news"
     search_depth: str = "basic"

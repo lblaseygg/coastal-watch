@@ -1061,6 +1061,7 @@ select {
     transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
+  overflow: hidden;
 }
 
 .case-drawer[data-state="open"] {
@@ -1100,6 +1101,12 @@ select {
 .case-card-summary {
   scrollbar-width: thin;
   scrollbar-color: rgba(17, 18, 20, 0.18) transparent;
+}
+
+.case-drawer-scroll {
+  min-height: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .case-drawer-scroll::-webkit-scrollbar,

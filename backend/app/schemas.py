@@ -52,6 +52,7 @@ class PublicCaseSummary(BaseModel):
     slug: str
     title: str
     municipality_id: str
+    municipality_ids: list[str]
     status: str
     category: str
     tags: list[str]
@@ -160,7 +161,7 @@ class ManualCaseCreateInput(BaseModel):
     summary: str
     source_url: str
     source_title: str
-    municipality_id: str
+    municipality_ids: list[str]
     first_reported_at: datetime
     last_reported_at: datetime | None = None
     category: str = "development"

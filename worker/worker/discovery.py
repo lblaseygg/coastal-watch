@@ -30,12 +30,18 @@ class SearchResult:
 @dataclass
 class RelevanceMatch:
     coastal_terms: set[str]
-    issue_terms: set[str]
+    access_terms: set[str]
+    blocking_terms: set[str]
+    development_terms: set[str]
+    protected_terms: set[str]
+    conflict_terms: set[str]
     excluded_terms: set[str]
 
     @property
     def is_relevant(self) -> bool:
-        return bool(self.coastal_terms) and bool(self.issue_terms) and not bool(self.excluded_terms)
+        access_match = bool(self.coastal_terms) and bool(self.access_terms) and bool(self.blocking_terms)
+        development_match = bool(self.protected_terms) and bool(self.development_terms) and bool(self.conflict_terms)
+        return (access_match or development_match) and not bool(self.excluded_terms)
 
 
 class TavilySearchClient:
@@ -150,13 +156,115 @@ def match_keywords(text: str, keywords: list[str]) -> set[str]:
     return {keyword for keyword in keywords if normalize_text(keyword) in normalized}
 
 
+DISCOVERY_ACCESS_KEYWORDS = [
+    "acceso",
+    "acceso publico",
+    "acceso público",
+    "entrada",
+    "playa",
+    "playas",
+    "servidumbre",
+    "camino",
+]
+
+DISCOVERY_BLOCKING_KEYWORDS = [
+    "bloqueo",
+    "bloqueado",
+    "bloquean",
+    "obstruccion",
+    "obstrucción",
+    "cierre",
+    "cerrado",
+    "cerraron",
+    "porton",
+    "portón",
+    "verja",
+    "barrera",
+    "cobro",
+    "cobran",
+    "tarifa",
+    "peaje",
+    "estacionamiento",
+    "parking",
+]
+
+DISCOVERY_DEVELOPMENT_KEYWORDS = [
+    "construccion",
+    "construcción",
+    "proyecto",
+    "obra",
+    "obras",
+    "relleno",
+    "tala",
+    "excavacion",
+    "excavación",
+    "condominio",
+    "hotel",
+    "resort",
+    "villas",
+    "marina",
+    "muelle",
+    "desarrollo turistico",
+    "desarrollo turístico",
+]
+
+DISCOVERY_PROTECTED_PLACE_KEYWORDS = [
+    "playa",
+    "playas",
+    "costa",
+    "litoral",
+    "zona maritimo terrestre",
+    "zona marítimo terrestre",
+    "zmt",
+    "area protegida",
+    "área protegida",
+    "reserva natural",
+    "manglar",
+    "manglares",
+    "humedal",
+    "humedales",
+    "duna",
+    "dunas",
+    "bosque protegido",
+    "corredor ecologico",
+    "corredor ecológico",
+    "playa virgen",
+]
+
+DISCOVERY_CONFLICT_KEYWORDS = [
+    "ilegal",
+    "ilegales",
+    "denuncia",
+    "denuncian",
+    "querella",
+    "demanda",
+    "controversia",
+    "controversial",
+    "oposicion",
+    "oposición",
+    "opositores",
+    "rechazo",
+    "amenaza",
+    "afecta",
+    "afecta",
+    "impacto ambiental",
+    "viola",
+    "violacion",
+    "violación",
+]
+
+
 def score_search_result(result: SearchResult) -> RelevanceMatch:
     haystack = " ".join(
         part for part in [result.title, result.snippet, result.publisher, result.url] if part
     )
     return RelevanceMatch(
         coastal_terms=match_keywords(haystack, settings.discovery_coastal_keywords),
-        issue_terms=match_keywords(haystack, settings.discovery_issue_keywords),
+        access_terms=match_keywords(haystack, DISCOVERY_ACCESS_KEYWORDS),
+        blocking_terms=match_keywords(haystack, DISCOVERY_BLOCKING_KEYWORDS),
+        development_terms=match_keywords(haystack, DISCOVERY_DEVELOPMENT_KEYWORDS),
+        protected_terms=match_keywords(haystack, DISCOVERY_PROTECTED_PLACE_KEYWORDS),
+        conflict_terms=match_keywords(haystack, DISCOVERY_CONFLICT_KEYWORDS),
         excluded_terms=match_keywords(haystack, settings.discovery_excluded_keywords),
     )
 
@@ -233,7 +341,11 @@ def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
                     publisher=result.publisher,
                     title=result.title,
                     coastal_terms=sorted(match.coastal_terms),
-                    issue_terms=sorted(match.issue_terms),
+                    access_terms=sorted(match.access_terms),
+                    blocking_terms=sorted(match.blocking_terms),
+                    development_terms=sorted(match.development_terms),
+                    protected_terms=sorted(match.protected_terms),
+                    conflict_terms=sorted(match.conflict_terms),
                     excluded_terms=sorted(match.excluded_terms),
                 )
                 continue

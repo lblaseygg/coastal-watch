@@ -42,12 +42,14 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
     const counts = new Map<string, { total: number; active: number }>();
 
     for (const currentCase of approvedCases) {
-      const existing = counts.get(currentCase.municipality_id) ?? { total: 0, active: 0 };
+      for (const municipalityId of currentCase.municipality_ids.length > 0 ? currentCase.municipality_ids : [currentCase.municipality_id]) {
+        const existing = counts.get(municipalityId) ?? { total: 0, active: 0 };
 
-      counts.set(currentCase.municipality_id, {
-        total: existing.total + 1,
-        active: existing.active + (currentCase.status === "active" ? 1 : 0)
-      });
+        counts.set(municipalityId, {
+          total: existing.total + 1,
+          active: existing.active + (currentCase.status === "active" ? 1 : 0)
+        });
+      }
     }
 
     return counts;
@@ -81,7 +83,8 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return approvedCases.filter((currentCase) => {
-      if (municipalityId && currentCase.municipality_id !== municipalityId) {
+      const municipalityIds = currentCase.municipality_ids.length > 0 ? currentCase.municipality_ids : [currentCase.municipality_id];
+      if (municipalityId && !municipalityIds.includes(municipalityId)) {
         return false;
       }
 

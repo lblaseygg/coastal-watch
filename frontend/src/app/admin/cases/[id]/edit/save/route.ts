@@ -28,11 +28,14 @@ export async function POST(
   const summary = String(formData.get("summary") ?? "").trim();
   const sourceUrl = String(formData.get("source_url") ?? "").trim();
   const sourceTitle = String(formData.get("source_title") ?? "").trim();
-  const municipalityId = String(formData.get("municipality_id") ?? "").trim();
+  const municipalityIds = formData
+    .getAll("municipality_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
   const firstReportedAt = String(formData.get("first_reported_at") ?? "").trim();
   const lastReportedAt = String(formData.get("last_reported_at") ?? "").trim();
 
-  if (!title || !summary || !sourceUrl || !sourceTitle || !municipalityId || !firstReportedAt) {
+  if (!title || !summary || !sourceUrl || !sourceTitle || municipalityIds.length === 0 || !firstReportedAt) {
     redirectUrl.searchParams.set("error", "missing_manual_case_fields");
     return NextResponse.redirect(redirectUrl, 303);
   }
@@ -43,7 +46,7 @@ export async function POST(
       summary,
       source_url: sourceUrl,
       source_title: sourceTitle,
-      municipality_id: municipalityId,
+      municipality_ids: municipalityIds,
       first_reported_at: toIsoDate(firstReportedAt),
       last_reported_at: lastReportedAt ? toIsoDate(lastReportedAt) : undefined
     });
