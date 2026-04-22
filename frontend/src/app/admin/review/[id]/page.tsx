@@ -92,9 +92,9 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
           </div>
         ) : null}
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_360px]">
-          <div className="grid gap-5">
-            <section className="panel px-6 py-6">
+        <section className="admin-review-detail-grid">
+          <div className="admin-review-detail-main">
+            <section className="panel overflow-hidden px-6 py-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={statusMeta[item.status]?.chipClassName ?? "status-chip"}>
                   {statusMeta[item.status]?.label ?? item.status.replaceAll("_", " ")}
@@ -102,14 +102,14 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                 <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                   {item.entity_type.replaceAll("_", " ")}
                 </span>
-                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                <span className="min-w-0 break-all text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                   {item.entity_id}
                 </span>
               </div>
-              <h2 className="mt-4 text-2xl font-semibold text-[var(--ink)]">
+              <h2 className="mt-4 break-words text-2xl font-semibold text-[var(--ink)]">
                 {item.extraction?.extracted_case_title ?? "Queued review item"}
               </h2>
-              <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              <p className="mt-4 break-words text-sm leading-7 text-[var(--muted)]">
                 {item.extraction?.extracted_summary ?? item.decision_notes ?? "No extracted summary available."}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
@@ -124,7 +124,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
               </div>
             </section>
 
-            <section className="panel px-6 py-6">
+            <section className="panel overflow-hidden px-6 py-6">
               <h3 className="text-lg font-semibold text-[var(--ink)]">Decision</h3>
               <AdminReviewDecisionForm
                 actionUrl={`/admin/review/${item.id}/decision`}
@@ -134,15 +134,25 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                 editableFields={item.editable_fields}
                 extractedSummary={item.extraction?.extracted_summary ?? ""}
               />
+              {item.article && item.extraction && item.linked_case ? (
+                <div className="mt-4">
+                  <Link
+                    className="inline-flex rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
+                    href={`/admin/review/${item.id}/edit`}
+                  >
+                    Edit automated case
+                  </Link>
+                </div>
+              ) : null}
             </section>
 
             {item.article ? (
-              <section className="panel px-6 py-6">
+              <section className="panel overflow-hidden px-6 py-6">
                 <h3 className="text-lg font-semibold text-[var(--ink)]">Source article</h3>
                 <div className="mt-4 grid gap-4">
                   <div>
-                    <p className="text-sm font-medium text-[var(--ink)]">{item.article.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                    <p className="break-words text-sm font-medium text-[var(--ink)]">{item.article.title}</p>
+                    <p className="mt-2 break-words text-sm leading-6 text-[var(--muted)]">
                       {item.article.publisher} · {new Date(item.article.published_at).toLocaleDateString()}
                     </p>
                     <a
@@ -158,7 +168,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                     <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                       Cleaned text
                     </p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                    <p className="mt-3 break-words text-sm leading-7 text-[var(--muted)]">
                       {item.article.cleaned_text}
                     </p>
                   </div>
@@ -167,15 +177,15 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
             ) : null}
           </div>
 
-          <div className="grid gap-5">
+          <div className="admin-review-detail-side">
             {item.linked_case ? (
-              <section className="panel px-6 py-6">
+              <section className="panel overflow-hidden px-6 py-6">
                 <h3 className="text-lg font-semibold text-[var(--ink)]">Linked case</h3>
-                <p className="mt-4 text-base font-medium text-[var(--ink)]">{item.linked_case.title}</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                <p className="mt-4 break-words text-base font-medium text-[var(--ink)]">{item.linked_case.title}</p>
+                <p className="mt-2 break-words text-sm leading-6 text-[var(--muted)]">
                   Municipality: {item.linked_case.municipality_id} · Status: {item.linked_case.status}
                 </p>
-                <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+                <p className="mt-4 break-words text-sm leading-7 text-[var(--muted)]">
                   {item.linked_case.public_summary}
                 </p>
                 <Link
@@ -188,14 +198,14 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
             ) : null}
 
             {item.extraction ? (
-              <section className="panel px-6 py-6">
+              <section className="panel overflow-hidden px-6 py-6">
                 <h3 className="text-lg font-semibold text-[var(--ink)]">Extraction details</h3>
                 <div className="mt-4 grid gap-4">
                   <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                       Model
                     </p>
-                    <p className="mt-2 text-sm text-[var(--ink)]">{item.extraction.model_name}</p>
+                    <p className="mt-2 break-words text-sm text-[var(--ink)]">{item.extraction.model_name}</p>
                   </div>
                   <div className="rounded-[16px] border border-[var(--line)] bg-[var(--soft)] p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
@@ -209,7 +219,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                     <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                       Editable fields
                     </p>
-                    <p className="mt-2 text-sm text-[var(--ink)]">
+                    <p className="mt-2 break-words text-sm text-[var(--ink)]">
                       {item.editable_fields.join(", ")}
                     </p>
                   </div>
@@ -217,7 +227,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
               </section>
             ) : null}
 
-            <section className="panel px-6 py-6">
+            <section className="panel overflow-hidden px-6 py-6">
               <h3 className="text-lg font-semibold text-[var(--ink)]">Audit trail</h3>
               <div className="mt-4 grid gap-4">
                 {item.audit_events.map((event) => (
@@ -228,12 +238,12 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                     <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
                       {event.action.replaceAll("_", " ")}
                     </p>
-                    <p className="mt-2 text-sm font-medium text-[var(--ink)]">{event.actor_id}</p>
-                    <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
+                    <p className="mt-2 break-words text-sm font-medium text-[var(--ink)]">{event.actor_id}</p>
+                    <p className="mt-1 break-words text-sm leading-6 text-[var(--muted)]">
                       {new Date(event.at).toLocaleString()}
                     </p>
                     {event.note ? (
-                      <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{event.note}</p>
+                      <p className="mt-3 break-words text-sm leading-7 text-[var(--muted)]">{event.note}</p>
                     ) : null}
                   </div>
                 ))}

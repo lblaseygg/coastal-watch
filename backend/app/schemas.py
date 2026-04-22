@@ -168,6 +168,15 @@ class ManualCaseCreateInput(BaseModel):
     status: str = "reported"
 
 
+class AutomatedCaseEditInput(BaseModel):
+    title: str
+    summary: str
+    source_url: str
+    source_title: str
+    municipality_ids: list[str]
+    category: str
+
+
 def success_payload(data: Any) -> dict[str, Any]:
     return Envelope(data=data).model_dump(mode="json")
 

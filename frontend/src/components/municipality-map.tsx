@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { NewsRecord } from "@/lib/contracts";
 
 type MunicipalityMapProps = {
+  municipalityCaseKinds: Map<string, "unique" | "shared" | "mixed">;
   municipalityNews: Map<string, NewsRecord[]>;
   municipalityCounts: Map<string, { total: number; active: number }>;
   onSelectMunicipality: (municipalityId: string | null) => void;
@@ -20,6 +21,7 @@ function slugifyMunicipalityName(name: string): string {
 }
 
 function MunicipalityMap({
+  municipalityCaseKinds,
   municipalityNews,
   municipalityCounts,
   onSelectMunicipality,
@@ -77,10 +79,90 @@ function MunicipalityMap({
     svg.removeAttribute("width");
     svg.removeAttribute("height");
 
+    const defs = svg.querySelector("defs") ?? document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    if (!defs.parentNode) {
+      svg.insertBefore(defs, svg.firstChild);
+    }
+
+    const ensurePattern = (patternId: string, backgroundFill: string, strokeColor: string) => {
+      if (svg.querySelector(`#${patternId}`)) {
+        return;
+      }
+
+      const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+      pattern.setAttribute("id", patternId);
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.setAttribute("width", "8");
+      pattern.setAttribute("height", "8");
+      pattern.setAttribute("patternTransform", "rotate(35)");
+
+      const background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      background.setAttribute("width", "8");
+      background.setAttribute("height", "8");
+      background.setAttribute("fill", backgroundFill);
+
+      const stripe = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      stripe.setAttribute("x1", "0");
+      stripe.setAttribute("y1", "0");
+      stripe.setAttribute("x2", "0");
+      stripe.setAttribute("y2", "8");
+      stripe.setAttribute("stroke", strokeColor);
+      stripe.setAttribute("stroke-width", "2.2");
+      stripe.setAttribute("stroke-linecap", "square");
+
+      pattern.append(background, stripe);
+      defs.appendChild(pattern);
+    };
+
+    ensurePattern("shared-case-pattern", "rgba(241, 238, 228, 0.9)", "#31506b");
+    ensurePattern("shared-case-pattern-hover", "rgba(235, 231, 219, 0.96)", "#27445d");
+    ensurePattern("shared-case-pattern-selected", "rgba(228, 223, 210, 0.98)", "#1d3447");
+    ensurePattern("mixed-case-pattern", "rgba(102, 155, 188, 0.56)", "#31506b");
+    ensurePattern("mixed-case-pattern-hover", "rgba(102, 155, 188, 0.68)", "#27445d");
+    ensurePattern("mixed-case-pattern-selected", "rgba(102, 155, 188, 0.82)", "#1d3447");
+
     const regions = Array.from(svg.querySelectorAll<SVGElement>('[id^="PR-"]'));
 
-    const applyRegionStyle = (region: SVGElement, options: { isSelected: boolean; isHovered: boolean; hasCases: boolean }) => {
-      const { isSelected, isHovered, hasCases } = options;
+    const applyRegionStyle = (
+      region: SVGElement,
+      options: {
+        isSelected: boolean;
+        isHovered: boolean;
+        hasCases: boolean;
+        caseKind: "unique" | "shared" | "mixed" | null;
+      }
+    ) => {
+      const { isSelected, isHovered, hasCases, caseKind } = options;
+      const strokeColor =
+        caseKind === "shared" || caseKind === "mixed"
+          ? isSelected
+            ? "#1d3447"
+            : isHovered
+              ? "#27445d"
+              : "#31506b"
+          : hasCases
+            ? "#003049"
+            : "#8b8a86";
+      const fillColor =
+        caseKind === "shared"
+          ? isSelected
+            ? "url(#shared-case-pattern-selected)"
+            : isHovered
+              ? "url(#shared-case-pattern-hover)"
+              : "url(#shared-case-pattern)"
+          : caseKind === "mixed"
+            ? isSelected
+              ? "url(#mixed-case-pattern-selected)"
+              : isHovered
+                ? "url(#mixed-case-pattern-hover)"
+                : "url(#mixed-case-pattern)"
+          : isSelected
+            ? "rgba(102, 155, 188, 0.82)"
+            : isHovered
+              ? "rgba(102, 155, 188, 0.64)"
+              : hasCases
+                ? "rgba(102, 155, 188, 0.52)"
+                : "rgba(255,255,255,0.45)";
 
       region.setAttribute(
         "style",
@@ -88,17 +170,9 @@ function MunicipalityMap({
           "vector-effect: non-scaling-stroke",
           "cursor: pointer",
           "pointer-events: visibleFill",
-          `stroke: ${isSelected ? "#003049" : isHovered ? "#003049" : hasCases ? "#003049" : "#8b8a86"}`,
+          `stroke: ${strokeColor}`,
           `stroke-width: ${isSelected ? "1.9" : isHovered ? "1.55" : "1.15"}`,
-          `fill: ${
-            isSelected
-              ? "rgba(102, 155, 188, 0.82)"
-              : isHovered
-                ? "rgba(102, 155, 188, 0.64)"
-                : hasCases
-                  ? "rgba(102, 155, 188, 0.52)"
-                  : "rgba(255,255,255,0.45)"
-          }`,
+          `fill: ${fillColor}`,
           `opacity: ${isSelected ? "1" : isHovered ? "0.98" : "0.92"}`,
           "transition: fill 160ms ease, stroke 160ms ease, opacity 160ms ease"
         ].join("; ")
@@ -109,10 +183,11 @@ function MunicipalityMap({
       const title = region.getAttribute("title") ?? "";
       const municipalityId = slugifyMunicipalityName(title);
       const counts = municipalityCounts.get(municipalityId);
+      const caseKind = municipalityCaseKinds.get(municipalityId) ?? null;
       const isSelected = municipalityId === selectedMunicipalityId;
       const hasCases = Boolean(counts && counts.total > 0);
 
-      applyRegionStyle(region, { isSelected, isHovered: false, hasCases });
+      applyRegionStyle(region, { isSelected, isHovered: false, hasCases, caseKind });
 
       const existingTitleNode = region.querySelector("title");
       if (existingTitleNode) {
@@ -123,7 +198,8 @@ function MunicipalityMap({
         applyRegionStyle(region, {
           isSelected: municipalityId === selectedMunicipalityId,
           isHovered: municipalityId !== selectedMunicipalityId,
-          hasCases
+          hasCases,
+          caseKind
         });
 
         const tooltip = tooltipRef.current;
@@ -169,7 +245,8 @@ function MunicipalityMap({
         applyRegionStyle(region, {
           isSelected: municipalityId === selectedMunicipalityId,
           isHovered: false,
-          hasCases
+          hasCases,
+          caseKind
         });
 
         const tooltip = tooltipRef.current;
@@ -214,6 +291,7 @@ function MunicipalityMap({
   }, [
     municipalityNews,
     municipalityCounts,
+    municipalityCaseKinds,
     onSelectMunicipality,
     selectedMunicipalityId,
     svgMarkup
@@ -234,6 +312,33 @@ function MunicipalityMap({
           </p>
         </div>
       </div>
+
+      <div className="map-legend">
+        <p className="map-legend-title">Legend</p>
+        <div className="map-legend-items">
+          <div className="map-legend-item" tabIndex={0}>
+            <span className="map-legend-swatch map-legend-swatch-unique" />
+            <span>Single case</span>
+            <span className="map-legend-hover-copy">
+              One case linked only to this municipality.
+            </span>
+          </div>
+          <div className="map-legend-item" tabIndex={0}>
+            <span className="map-legend-swatch map-legend-swatch-shared" />
+            <span>Shared cases</span>
+            <span className="map-legend-hover-copy">
+              A case linked across multiple municipalities.
+            </span>
+          </div>
+          <div className="map-legend-item" tabIndex={0}>
+            <span className="map-legend-swatch map-legend-swatch-mixed" />
+            <span>Single + shared</span>
+            <span className="map-legend-hover-copy">
+              This municipality has both its own local case and a shared multi-municipality case.
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -244,5 +349,6 @@ export default memo(
     previousProps.municipalityNews === nextProps.municipalityNews &&
     previousProps.selectedMunicipalityId === nextProps.selectedMunicipalityId &&
     previousProps.municipalityCounts === nextProps.municipalityCounts &&
+    previousProps.municipalityCaseKinds === nextProps.municipalityCaseKinds &&
     previousProps.onSelectMunicipality === nextProps.onSelectMunicipality
 );

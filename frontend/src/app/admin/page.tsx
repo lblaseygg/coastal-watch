@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { type AdminManualCaseRecord, type AdminReviewItemSummaryRecord, getAdminManualCases, getAdminReviewItems } from "@/lib/admin-api";
 import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
 import AdminScrollRestoration from "@/components/admin-scroll-restoration";
+import AdminCollapseButton from "@/components/admin-collapse-button";
 import PublicNav from "@/components/public-nav";
 import { getMapMunicipalities, mapMunicipalitiesToRecords } from "@/lib/api";
 
@@ -257,91 +258,96 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </section>
 
         <section className="panel px-6 py-6 md:px-8">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--muted)]">
-                Manual case entry
-              </p>
-              <h2 className="mt-3 text-[1.7rem] font-semibold leading-tight text-[var(--ink)]">
-                Create a case directly from reporting you want to track.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--muted)]">
-                Use this when you already know the municipality, source article, and case summary.
-                Manual entries create a public case and link it to the source URL immediately.
-              </p>
-            </div>
-
-            <form action="/admin/cases/create" className="grid gap-4" method="post">
-              <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Case title
-                <input className="admin-review-input" name="title" required type="text" />
-              </label>
-
-              <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Summary of the article
-                <textarea
-                  className="admin-review-textarea min-h-[180px]"
-                  name="summary"
-                  placeholder="Summarize what is being built, blocked, or harmed, and why it matters."
-                  required
-                />
-              </label>
-
-              <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Source title
-                <input className="admin-review-input" name="source_title" required type="text" />
-              </label>
-
-              <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Source link
-                <input className="admin-review-input" name="source_url" required type="url" />
-              </label>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                  First published
-                  <input className="admin-review-input" name="first_reported_at" required type="date" />
-                </label>
-
-                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                  Last updated
-                  <input className="admin-review-input" name="last_reported_at" type="date" />
-                </label>
-              </div>
-
-              <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-                Municipalities
-              </label>
-              <fieldset className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-white p-4">
-                <legend className="sr-only">Municipalities</legend>
-                <p className="text-sm leading-6 text-[var(--muted)]">
-                  Select every municipality this manual case should appear in on the map.
+          <details className="admin-collapsible-panel">
+            <summary className="admin-collapsible-summary">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--muted)]">
+                  Manual case entry
                 </p>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {municipalities.map((municipality) => (
-                    <label className="flex items-center gap-3 text-sm text-[var(--ink)]" key={municipality.id}>
-                      <input
-                        className="h-4 w-4 rounded border-[var(--line)] text-[var(--ink)]"
-                        name="municipality_ids"
-                        type="checkbox"
-                        value={municipality.id}
-                      />
-                      <span>{municipality.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              <div className="flex flex-wrap gap-3 pt-2">
-                <button
-                  className="rounded-[10px] border border-[var(--ink)] bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                  type="submit"
-                >
-                  Create case
-                </button>
+                <h2 className="mt-2 text-[1.25rem] font-semibold leading-tight text-[var(--ink)]">
+                  Create a case directly from reporting you want to track.
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+                  Add a case manually only when the automated pipeline missed it or when you want to publish a curated entry.
+                </p>
               </div>
-            </form>
-          </div>
+              <span className="admin-collapsible-trigger">Create manual case</span>
+            </summary>
+
+            <div className="admin-collapsible-content">
+              <form action="/admin/cases/create" className="grid gap-4" method="post">
+                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                  Case title
+                  <input className="admin-review-input" name="title" required type="text" />
+                </label>
+
+                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                  Summary of the article
+                  <textarea
+                    className="admin-review-textarea min-h-[180px]"
+                    name="summary"
+                    placeholder="Summarize what is being built, blocked, or harmed, and why it matters."
+                    required
+                  />
+                </label>
+
+                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                  Source title
+                  <input className="admin-review-input" name="source_title" required type="text" />
+                </label>
+
+                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                  Source link
+                  <input className="admin-review-input" name="source_url" required type="url" />
+                </label>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                    First published
+                    <input className="admin-review-input" name="first_reported_at" required type="date" />
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                    Last updated
+                    <input className="admin-review-input" name="last_reported_at" type="date" />
+                  </label>
+                </div>
+
+                <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+                  Municipalities
+                </label>
+                <fieldset className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-white p-4">
+                  <legend className="sr-only">Municipalities</legend>
+                  <p className="text-sm leading-6 text-[var(--muted)]">
+                    Select every municipality this manual case should appear in on the map.
+                  </p>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {municipalities.map((municipality) => (
+                      <label className="flex items-center gap-3 text-sm text-[var(--ink)]" key={municipality.id}>
+                        <input
+                          className="h-4 w-4 rounded border-[var(--line)] text-[var(--ink)]"
+                          name="municipality_ids"
+                          type="checkbox"
+                          value={municipality.id}
+                        />
+                        <span>{municipality.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    className="rounded-[10px] border border-[var(--ink)] bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                    type="submit"
+                  >
+                    Create case
+                  </button>
+                  <AdminCollapseButton />
+                </div>
+              </form>
+            </div>
+          </details>
         </section>
 
         <section className="panel px-6 py-6 md:px-8">
@@ -411,6 +417,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   }`}
                   href={statusValue === "all" ? "/admin" : `/admin?status=${statusValue}`}
                   key={statusValue}
+                  scroll={false}
                 >
                   {statusValue.replaceAll("_", " ")}
                 </Link>

@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
-function storageKeyForPath(pathname: string): string {
-  return `coastal-watch:admin-scroll:${pathname}`;
+function storageKeyForLocation(pathname: string, search: string): string {
+  return `coastal-watch:admin-scroll:${pathname}?${search}`;
 }
 
 export default function AdminScrollRestoration() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
 
   useEffect(() => {
-    const storageKey = storageKeyForPath(pathname);
+    const storageKey = storageKeyForLocation(pathname, search);
 
     const restoreScroll = () => {
       const storedValue = window.sessionStorage.getItem(storageKey);
@@ -42,7 +44,7 @@ export default function AdminScrollRestoration() {
       window.removeEventListener("pagehide", saveScroll);
       window.removeEventListener("beforeunload", saveScroll);
     };
-  }, [pathname]);
+  }, [pathname, search]);
 
   return null;
 }

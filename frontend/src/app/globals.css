@@ -421,6 +421,42 @@ select {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 246, 242, 0.96));
 }
 
+.admin-review-detail-grid {
+  display: grid;
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.admin-review-detail-main,
+.admin-review-detail-side {
+  display: grid;
+  min-width: 0;
+  gap: 1.25rem;
+}
+
+.admin-review-detail-main > *,
+.admin-review-detail-side > * {
+  min-width: 0;
+}
+
+.admin-review-detail-main .panel,
+.admin-review-detail-side .panel {
+  min-width: 0;
+}
+
+.admin-review-detail-main p,
+.admin-review-detail-side p,
+.admin-review-detail-main h2,
+.admin-review-detail-side h3,
+.admin-review-detail-main span,
+.admin-review-detail-side span,
+.admin-review-detail-main a,
+.admin-review-detail-side a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .admin-manual-case-row {
   display: grid;
   gap: 0.4rem;
@@ -428,6 +464,77 @@ select {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.92);
   padding: 0.85rem 1rem;
+}
+
+.admin-collapsible-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.72rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.admin-collapsible-summary:hover .admin-collapsible-trigger {
+  border-color: rgba(20, 20, 20, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  transform: translateY(-1px);
+}
+
+.admin-collapsible-panel[open] .admin-collapsible-trigger {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.admin-collapsible-content {
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.admin-collapse-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.72rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.admin-collapse-button:hover {
+  border-color: rgba(20, 20, 20, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--ink);
+  transform: translateY(-1px);
 }
 
 .admin-filter-panel {
@@ -534,6 +641,12 @@ select {
   background: rgba(157, 52, 52, 0.1);
   border-color: rgba(157, 52, 52, 0.18);
   color: #7a2525;
+}
+
+@media (min-width: 1024px) {
+  .admin-review-detail-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  }
 }
 
 .toolbar-button {
@@ -1006,6 +1119,109 @@ select {
 .municipality-news-tooltip-empty {
   font-size: 0.8rem;
   color: rgba(249, 246, 239, 0.72);
+}
+
+.map-legend {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  min-width: 148px;
+  border: 1px solid rgba(17, 18, 20, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 10px 12px;
+  box-shadow:
+    0 12px 24px rgba(20, 20, 20, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+}
+
+.map-legend-title {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.map-legend-items {
+  display: grid;
+  gap: 6px;
+}
+
+.map-legend-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  outline: none;
+}
+
+.map-legend-swatch {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  flex: 0 0 auto;
+}
+
+.map-legend-swatch-unique {
+  border-color: #003049;
+  background: rgba(102, 155, 188, 0.58);
+}
+
+.map-legend-swatch-shared {
+  border-color: #31506b;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(49, 80, 107, 0.9) 0 3px,
+      rgba(241, 238, 228, 0.92) 3px 7px
+    );
+}
+
+.map-legend-swatch-mixed {
+  border-color: #31506b;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(49, 80, 107, 0.88) 0 3px,
+      rgba(102, 155, 188, 0.62) 3px 7px
+    );
+}
+
+.map-legend-hover-copy {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  width: 180px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(20, 20, 20, 0.94);
+  color: #f9f6ef;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, -50%, 0) scale(0.96);
+  transition: opacity 140ms ease, transform 140ms ease;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+}
+
+.map-legend-item:hover .map-legend-hover-copy,
+.map-legend-item:focus-visible .map-legend-hover-copy {
+  opacity: 1;
+  transform: translate3d(0, -50%, 0) scale(1);
 }
 
 .map-chip-stack {

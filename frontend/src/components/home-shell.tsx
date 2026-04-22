@@ -55,6 +55,30 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
     return counts;
   }, [approvedCases]);
 
+  const municipalityCaseKinds = useMemo(() => {
+    const kinds = new Map<string, "unique" | "shared" | "mixed">();
+
+    for (const currentCase of approvedCases) {
+      const municipalityIds =
+        currentCase.municipality_ids.length > 0 ? currentCase.municipality_ids : [currentCase.municipality_id];
+      const caseKind = municipalityIds.length > 1 ? "shared" : "unique";
+
+      for (const municipalityId of municipalityIds) {
+        const existingKind = kinds.get(municipalityId);
+        if (existingKind === "mixed") {
+          continue;
+        }
+        if (existingKind && existingKind !== caseKind) {
+          kinds.set(municipalityId, "mixed");
+          continue;
+        }
+        kinds.set(municipalityId, caseKind);
+      }
+    }
+
+    return kinds;
+  }, [approvedCases]);
+
   const newsByMunicipality = useMemo(() => {
     const grouped = new Map<string, NewsRecord[]>();
 
@@ -293,6 +317,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
         <section>
           <div className="map-frame self-start overflow-hidden p-3 md:p-4">
             <MunicipalityMap
+              municipalityCaseKinds={municipalityCaseKinds}
               municipalityNews={newsByMunicipality}
               municipalityCounts={municipalityCounts}
               onSelectMunicipality={setSelectedMunicipalityId}

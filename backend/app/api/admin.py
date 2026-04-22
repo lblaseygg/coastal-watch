@@ -24,6 +24,7 @@ from app.schemas import (
     AdminArticleDetail,
     AdminArticleExtractionClaim,
     AdminArticleExtractionDetail,
+    AutomatedCaseEditInput,
     AdminReviewQueueItemDetail,
     AuditEvent,
     ManualCaseCreateInput,
@@ -97,6 +98,28 @@ def municipality_name_map(db: Session, municipality_ids: list[str]) -> dict[str,
         return {}
     municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
     return {municipality.id: municipality.name for municipality in municipalities}
+
+
+def resolve_municipalities(db: Session, municipality_ids: list[str]) -> tuple[list[str], dict[str, Municipality]]:
+    normalized_ids = [municipality_id for municipality_id in municipality_ids if municipality_id]
+    if not normalized_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one municipality is required",
+        )
+
+    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(normalized_ids))).all()
+    municipality_by_id = {municipality.id: municipality for municipality in municipalities}
+    missing_municipalities = [
+        municipality_id for municipality_id in normalized_ids if municipality_id not in municipality_by_id
+    ]
+    if missing_municipalities:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Municipality not found: {', '.join(missing_municipalities)}",
+        )
+
+    return normalized_ids, municipality_by_id
 
 
 def get_primary_case_article(current_case: Case) -> Article | None:
@@ -260,6 +283,27 @@ def serialize_review_detail(db: Session, item: ReviewQueueItem) -> dict[str, Any
     ).model_dump(mode="json")
 
 
+def add_audit_event(
+    item: ReviewQueueItem,
+    *,
+    action: str,
+    actor_id: str,
+    at: datetime,
+    note: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    item.audit_events = [
+        *item.audit_events,
+        AuditEvent(
+            action=action,
+            actor_id=actor_id,
+            at=at,
+            note=note,
+            metadata=metadata,
+        ).model_dump(mode="json"),
+    ]
+
+
 def apply_extraction_edits(
     extraction: ArticleExtraction,
     queue_item: ReviewQueueItem,
@@ -397,16 +441,14 @@ def submit_review_decision(
     item.status = decision_status
     item.decision_notes = payload.note.strip() if payload.note else None
     item.updated_at = now
-    item.audit_events = [
-        *item.audit_events,
-        AuditEvent(
-            action=decision_status,
-            actor_id=admin.actor_id,
-            at=now,
-            note=item.decision_notes,
-            metadata={"edited_fields": applied_fields} if applied_fields else None,
-        ).model_dump(mode="json"),
-    ]
+    add_audit_event(
+        item,
+        action=decision_status,
+        actor_id=admin.actor_id,
+        at=now,
+        note=item.decision_notes,
+        metadata={"edited_fields": applied_fields} if applied_fields else None,
+    )
 
     db.add(item)
     if extraction is not None:
@@ -422,20 +464,112 @@ def submit_review_decision(
     return success_payload({"item": serialize_review_detail(db, item)})
 
 
+@router.put("/review-items/{item_id}/content")
+def update_review_item_content(
+    item_id: str,
+    payload: AutomatedCaseEditInput,
+    db: Session = Depends(get_db),
+    admin: AdminIdentity = Depends(require_admin),
+) -> dict[str, Any]:
+    item = db.get(ReviewQueueItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review item not found")
+
+    if item.entity_type != "article_extraction":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Only automated article extractions can be edited here",
+        )
+
+    extraction = db.get(ArticleExtraction, item.entity_id)
+    if extraction is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked extraction not found")
+
+    article = db.get(Article, extraction.article_id)
+    if article is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked article not found")
+
+    linked_case = resolve_case_for_extraction(db, extraction)
+    if linked_case is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Linked case not found for this review item",
+        )
+
+    title = payload.title.strip()
+    summary = payload.summary.strip()
+    source_url = payload.source_url.strip()
+    source_title = payload.source_title.strip()
+    category = payload.category.strip()
+
+    municipality_ids, municipality_by_id = resolve_municipalities(db, payload.municipality_ids)
+    primary_municipality = municipality_by_id[municipality_ids[0]]
+
+    conflicting_article = db.scalar(select(Article).where(Article.url == source_url))
+    if conflicting_article is not None and conflicting_article.id != article.id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Another article already uses that source URL",
+        )
+
+    now = utcnow()
+    extraction.extracted_case_title = title[:255]
+    extraction.extracted_summary = summary
+    extraction.category = category
+    extraction.municipality_ids = municipality_ids
+
+    article.url = source_url
+    article.publisher = normalize_publisher(source_url)
+    article.title = source_title[:500]
+    article.accessed_at = now
+
+    linked_case.title = title[:255]
+    linked_case.municipality_id = primary_municipality.id
+    linked_case.municipality_ids = municipality_ids
+    linked_case.category = category
+    linked_case.public_summary = summary
+    linked_case.internal_summary = f"Automated case updated by {admin.actor_id}"
+    linked_case.location_lat = primary_municipality.centroid_lat
+    linked_case.location_lng = primary_municipality.centroid_lng
+    linked_case.location_precision = "municipality"
+    linked_case.last_updated_at = now
+
+    item.updated_at = now
+    add_audit_event(
+        item,
+        action="content_updated",
+        actor_id=admin.actor_id,
+        at=now,
+        note="Updated automated article and linked case metadata.",
+        metadata={
+            "edited_fields": [
+                "title",
+                "summary",
+                "source_url",
+                "source_title",
+                "municipality_ids",
+                "category",
+            ]
+        },
+    )
+
+    db.add(extraction)
+    db.add(article)
+    db.add(linked_case)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+
+    return success_payload({"item": serialize_review_detail(db, item)})
+
+
 @router.post("/cases/manual")
 def create_manual_case(
     payload: ManualCaseCreateInput,
     db: Session = Depends(get_db),
     admin: AdminIdentity = Depends(require_admin),
 ) -> dict[str, Any]:
-    municipality_ids = [municipality_id for municipality_id in payload.municipality_ids if municipality_id]
-    if not municipality_ids:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="At least one municipality is required")
-    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
-    municipality_by_id = {municipality.id: municipality for municipality in municipalities}
-    missing_municipalities = [municipality_id for municipality_id in municipality_ids if municipality_id not in municipality_by_id]
-    if missing_municipalities:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Municipality not found: {', '.join(missing_municipalities)}")
+    municipality_ids, municipality_by_id = resolve_municipalities(db, payload.municipality_ids)
     municipality = municipality_by_id[municipality_ids[0]]
 
     last_reported_at = payload.last_reported_at or payload.first_reported_at
@@ -577,14 +711,7 @@ def update_manual_case(
     if not is_manual_case(current_case):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Case is not a manual admin entry")
 
-    municipality_ids = [municipality_id for municipality_id in payload.municipality_ids if municipality_id]
-    if not municipality_ids:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="At least one municipality is required")
-    municipalities = db.scalars(select(Municipality).where(Municipality.id.in_(municipality_ids))).all()
-    municipality_by_id = {municipality.id: municipality for municipality in municipalities}
-    missing_municipalities = [municipality_id for municipality_id in municipality_ids if municipality_id not in municipality_by_id]
-    if missing_municipalities:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Municipality not found: {', '.join(missing_municipalities)}")
+    municipality_ids, municipality_by_id = resolve_municipalities(db, payload.municipality_ids)
     municipality = municipality_by_id[municipality_ids[0]]
 
     last_reported_at = payload.last_reported_at or payload.first_reported_at

@@ -102,6 +102,15 @@ export type AdminManualCasePayload = {
   status?: string;
 };
 
+export type AdminAutomatedCasePayload = {
+  title: string;
+  summary: string;
+  source_url: string;
+  source_title: string;
+  municipality_ids: string[];
+  category: string;
+};
+
 export type AdminManualCaseRecord = {
   case: Pick<
     CaseRecord,
@@ -227,6 +236,25 @@ export async function submitAdminDecision(
       token,
       actor,
       method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+
+  return data.item;
+}
+
+export async function updateAdminReviewItemContent(
+  token: string,
+  actor: string,
+  itemId: string,
+  payload: AdminAutomatedCasePayload
+): Promise<AdminReviewItemDetailRecord> {
+  const data = await fetchAdminApi<{ item: AdminReviewItemDetailRecord }>(
+    `/api/admin/review-items/${itemId}/content`,
+    {
+      token,
+      actor,
+      method: "PUT",
       body: JSON.stringify(payload)
     }
   );
