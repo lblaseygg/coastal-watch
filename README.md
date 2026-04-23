@@ -8,6 +8,7 @@ The current repo includes:
 - a PostgreSQL-backed Docker stack for local development
 - a worker that discovers, extracts, and routes public reporting into the system
 - full municipality seed data for Puerto Rico
+- manual admin workflows for creating, editing, and publishing cases when automation is paused
 
 ## Quick Start
 
@@ -18,7 +19,7 @@ The fastest way to run the project is with Docker.
 From the repo root:
 
 ```bash
-docker compose up --build
+docker compose --env-file .env.docker up --build
 ```
 
 This starts:
@@ -30,22 +31,27 @@ Useful URLs:
 - frontend: `http://localhost:3000`
 - API health: `http://localhost:8000/health`
 
+Required local secrets live in `.env.docker`:
+- `POSTGRES_PASSWORD`
+- `ADMIN_API_TOKEN`
+- optionally `ADMIN_SESSION_SECRET` if you want a session secret distinct from the admin token
+
 Run in the background:
 
 ```bash
-docker compose up --build -d
+docker compose --env-file .env.docker up --build -d
 ```
 
 Stop the stack:
 
 ```bash
-docker compose down
+docker compose --env-file .env.docker down
 ```
 
 Rebuild after changes:
 
 ```bash
-docker compose up --build -d
+docker compose --env-file .env.docker up --build -d
 ```
 
 ## Local Development Without Docker
@@ -109,6 +115,8 @@ Health check:
 
 The worker uses Tavily for discovery and page extraction, then applies Coastal Watch's
 local extraction and routing rules.
+
+If you are operating in manual mode because Tavily credits are unavailable, you can skip the worker entirely and use the admin UI to create and edit public cases directly.
 
 Run the worker against the Docker Postgres database:
 
@@ -177,6 +185,12 @@ The API currently exposes public endpoints for:
 - public news feed
 - health checks
 
+### Admin access
+- `/admin` is hidden from public navigation unless a valid admin session exists
+- admin sign-in uses the shared `ADMIN_API_TOKEN`
+- the browser stores a signed admin session cookie, not the raw bearer token
+- admin mutations are protected with signed CSRF tokens and same-origin checks
+
 ### Automation flow
 1. Tavily Search discovers candidate public reporting
 2. Tavily Extract retrieves article content
@@ -196,6 +210,17 @@ These are loaded by:
 python -m app.seed
 ```
 
+## Manual Operations Mode
+
+The app can run without the worker.
+
+In manual mode:
+- the public site still serves approved cases and linked source articles
+- admins use `/admin` to review, edit, and publish records
+- manual case creation can be used when Tavily credits are paused or automation is intentionally disabled
+
+This is the current recommended deployment mode until worker scheduling and Tavily usage are re-enabled in production.
+
 ## Project Status
 
 Implemented:
@@ -207,14 +232,15 @@ Implemented:
 - public backend API
 - database models and migrations
 - Docker local stack
-- admin review and auth
+- admin review, signed session auth, and CSRF protection
 - automated discovery/extraction/routing worker
 - trusted-source auto-publish pipeline
+- AWS-ready split between API startup and one-off database init tasks
 
 Still to do:
-- tests and observability
-- AWS deployment
+- production deployment rollout
 - model-based extraction beyond the current heuristic worker
+- worker reintroduction in production when credits and scheduling are ready
 
 ## Repo Structure
 
@@ -234,6 +260,7 @@ coastal-watch/
 - In local Docker, the backend service runs migrations and municipality seed data through `backend/docker-dev-entrypoint.sh`.
 - In production, the API container should start with `backend/docker-entrypoint.sh` only, and migrations/seed should run as a one-off init step via `backend/docker-init.sh`.
 - The worker currently uses rule-based extraction and summarization; it is automated, but not yet model-based.
+- The current AWS deployment direction is: Amplify frontend, ECS Fargate API, RDS PostgreSQL, and a separate one-off init task. The worker can be omitted temporarily in manual-operations mode.
 - Local docs and planning files may exist in the repo but are not required to start the environment.
 
 ## License
