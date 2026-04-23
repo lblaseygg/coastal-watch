@@ -231,7 +231,8 @@ coastal-watch/
 ## Notes
 
 - The frontend currently uses a clean SVG map instead of Leaflet for the main public UI.
-- The backend container automatically runs migrations and seeds data on startup through `backend/docker-entrypoint.sh`.
+- In local Docker, the backend service runs migrations and municipality seed data through `backend/docker-dev-entrypoint.sh`.
+- In production, the API container should start with `backend/docker-entrypoint.sh` only, and migrations/seed should run as a one-off init step via `backend/docker-init.sh`.
 - The worker currently uses rule-based extraction and summarization; it is automated, but not yet model-based.
 - Local docs and planning files may exist in the repo but are not required to start the environment.
 

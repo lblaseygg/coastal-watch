@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getAdminReviewItem } from "@/lib/admin-api";
 import AdminScrollRestoration from "@/components/admin-scroll-restoration";
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { createAdminCsrfToken, getAdminSession } from "@/lib/admin-session";
 import { AdminReviewDecisionForm } from "@/components/admin-review-decision-form";
 import PublicNav from "@/components/public-nav";
 
@@ -24,16 +24,17 @@ const statusMeta: Record<string, { label: string; chipClassName: string }> = {
 
 export default async function ReviewDetailPage({ params, searchParams }: ReviewDetailPageProps) {
   const cookieStore = cookies();
-  const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
-  const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
+  const adminSession = getAdminSession(cookieStore);
+  const actor = adminSession?.actor;
+  const csrfToken = adminSession ? createAdminCsrfToken(adminSession) : null;
 
-  if (!token || !actor) {
+  if (!actor) {
     redirect("/admin?error=session_expired");
   }
 
   let item;
   try {
-    item = await getAdminReviewItem(token, actor, params.id);
+    item = await getAdminReviewItem(actor, params.id);
   } catch (error) {
     const status = (error as Error & { status?: number }).status;
     if (status === 401) {
@@ -56,7 +57,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
                 Admin
               </p>
 
-              <PublicNav activeHref="/admin" />
+              <PublicNav activeHref="/admin" showAdmin />
             </div>
           </div>
         </header>
@@ -129,6 +130,7 @@ export default async function ReviewDetailPage({ params, searchParams }: ReviewD
               <AdminReviewDecisionForm
                 actionUrl={`/admin/review/${item.id}/decision`}
                 actor={actor}
+                csrfToken={csrfToken ?? ""}
                 assignedTo={item.assigned_to}
                 decisionNotes={item.decision_notes}
                 editableFields={item.editable_fields}

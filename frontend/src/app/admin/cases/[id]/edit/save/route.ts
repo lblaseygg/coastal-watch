@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { updateAdminManualCase } from "@/lib/admin-api";
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { validateAdminMutationRequest } from "@/lib/admin-csrf";
+import { getAdminSession } from "@/lib/admin-session";
 import { appUrl } from "@/lib/request-origin";
 
 function toIsoDate(dateValue: string): string {
@@ -14,11 +15,11 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const cookieStore = cookies();
-  const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
-  const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
+  const adminSession = getAdminSession(cookieStore);
+  const actor = adminSession?.actor;
   const redirectUrl = appUrl(request, `/admin/cases/${params.id}/edit`);
 
-  if (!token || !actor) {
+  if (!actor) {
     redirectUrl.searchParams.set("error", "session_expired");
     return NextResponse.redirect(redirectUrl, 303);
   }
@@ -34,6 +35,16 @@ export async function POST(
     .filter(Boolean);
   const firstReportedAt = String(formData.get("first_reported_at") ?? "").trim();
   const lastReportedAt = String(formData.get("last_reported_at") ?? "").trim();
+  const csrfError = validateAdminMutationRequest(
+    request,
+    adminSession,
+    String(formData.get("csrf_token") ?? "").trim() || undefined
+  );
+
+  if (csrfError) {
+    redirectUrl.searchParams.set("error", csrfError);
+    return NextResponse.redirect(redirectUrl, 303);
+  }
 
   if (!title || !summary || !sourceUrl || !sourceTitle || municipalityIds.length === 0 || !firstReportedAt) {
     redirectUrl.searchParams.set("error", "missing_manual_case_fields");
@@ -41,7 +52,7 @@ export async function POST(
   }
 
   try {
-    await updateAdminManualCase(token, actor, params.id, {
+    await updateAdminManualCase(actor, params.id, {
       title,
       summary,
       source_url: sourceUrl,

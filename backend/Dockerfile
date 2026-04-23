@@ -13,8 +13,10 @@ COPY alembic ./alembic
 COPY app ./app
 COPY seeds ./seeds
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY docker-init.sh ./docker-init.sh
+COPY docker-dev-entrypoint.sh ./docker-dev-entrypoint.sh
 
-RUN chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh /app/docker-init.sh /app/docker-dev-entrypoint.sh
 
 EXPOSE 8000
 

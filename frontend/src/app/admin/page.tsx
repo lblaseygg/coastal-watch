@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { type AdminManualCaseRecord, type AdminReviewItemSummaryRecord, getAdminManualCases, getAdminReviewItems } from "@/lib/admin-api";
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { createAdminCsrfToken, createLoginCsrfToken, getAdminSession } from "@/lib/admin-session";
 import AdminScrollRestoration from "@/components/admin-scroll-restoration";
 import AdminCollapseButton from "@/components/admin-collapse-button";
 import PublicNav from "@/components/public-nav";
@@ -68,8 +68,10 @@ const statusMeta: Record<
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const cookieStore = cookies();
-  const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
-  const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
+  const adminSession = getAdminSession(cookieStore);
+  const actor = adminSession?.actor;
+  const loginCsrfToken = createLoginCsrfToken();
+  const adminCsrfToken = adminSession ? createAdminCsrfToken(adminSession) : null;
   const statusFilter = searchParams?.status ?? "all";
   const flashMessage =
     searchParams?.error
@@ -86,19 +88,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   let authFailed = false;
   const municipalities = mapMunicipalitiesToRecords(await getMapMunicipalities());
 
-  if (token && actor) {
+  if (actor) {
     try {
       [items, allItems, manualCases] = await Promise.all([
-        getAdminReviewItems(token, actor, statusFilter),
-        getAdminReviewItems(token, actor, "all"),
-        getAdminManualCases(token, actor)
+        getAdminReviewItems(actor, statusFilter),
+        getAdminReviewItems(actor, "all"),
+        getAdminManualCases(actor)
       ]);
     } catch {
       authFailed = true;
     }
   }
 
-  if (!token || !actor || authFailed) {
+  if (!actor || authFailed) {
     return (
       <main className="page-shell">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -109,7 +111,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   Admin
                 </p>
 
-                <PublicNav activeHref="/admin" />
+                <PublicNav activeHref="/admin" showAdmin />
               </div>
             </div>
           </header>
@@ -133,6 +135,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : null}
 
             <form action="/admin/login" className="mt-8 grid gap-4" method="post">
+              {loginCsrfToken ? <input name="csrf_token" type="hidden" value={loginCsrfToken} /> : null}
               <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
                 Reviewer name
                 <input
@@ -196,7 +199,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 Admin
               </p>
 
-              <PublicNav activeHref="/admin" />
+              <PublicNav activeHref="/admin" showAdmin />
             </div>
           </div>
         </header>
@@ -232,6 +235,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </p>
             </div>
             <form action="/admin/logout" method="post">
+              {adminCsrfToken ? <input name="csrf_token" type="hidden" value={adminCsrfToken} /> : null}
               <button
                 className="rounded-[10px] border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--soft)] hover:text-[var(--ink)]"
                 type="submit"
@@ -276,6 +280,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
             <div className="admin-collapsible-content">
               <form action="/admin/cases/create" className="grid gap-4" method="post">
+                {adminCsrfToken ? <input name="csrf_token" type="hidden" value={adminCsrfToken} /> : null}
                 <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
                   Case title
                   <input className="admin-review-input" name="title" required type="text" />
@@ -390,6 +395,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         Edit
                       </Link>
                       <form action={`/admin/cases/${item.case.id}/delete`} method="post">
+                        {adminCsrfToken ? <input name="csrf_token" type="hidden" value={adminCsrfToken} /> : null}
                         <button
                           className="admin-action-button admin-action-button-reject admin-action-button-compact"
                           type="submit"

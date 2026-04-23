@@ -6,7 +6,7 @@ import AdminScrollRestoration from "@/components/admin-scroll-restoration";
 import PublicNav from "@/components/public-nav";
 import { getMapMunicipalities, mapMunicipalitiesToRecords } from "@/lib/api";
 import { getAdminManualCase } from "@/lib/admin-api";
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { createAdminCsrfToken, getAdminSession } from "@/lib/admin-session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,10 +21,11 @@ export default async function ManualCaseEditPage({
   searchParams
 }: ManualCaseEditPageProps) {
   const cookieStore = cookies();
-  const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
-  const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
+  const adminSession = getAdminSession(cookieStore);
+  const actor = adminSession?.actor;
+  const csrfToken = adminSession ? createAdminCsrfToken(adminSession) : null;
 
-  if (!token || !actor) {
+  if (!actor) {
     redirect("/admin?error=session_expired");
   }
 
@@ -32,7 +33,7 @@ export default async function ManualCaseEditPage({
 
   let manualCase;
   try {
-    manualCase = await getAdminManualCase(token, actor, params.id);
+    manualCase = await getAdminManualCase(actor, params.id);
   } catch (error) {
     const status = (error as Error & { status?: number }).status;
     if (status === 401) {
@@ -55,7 +56,7 @@ export default async function ManualCaseEditPage({
                 Admin
               </p>
 
-              <PublicNav activeHref="/admin" />
+              <PublicNav activeHref="/admin" showAdmin />
             </div>
           </div>
         </header>
@@ -91,6 +92,7 @@ export default async function ManualCaseEditPage({
 
         <section className="panel px-6 py-6 md:px-8">
           <form action={`/admin/cases/${params.id}/edit/save`} className="grid gap-4" method="post">
+            {csrfToken ? <input name="csrf_token" type="hidden" value={csrfToken} /> : null}
             <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
               Case title
               <input className="admin-review-input" defaultValue={manualCase.case.title} name="title" required type="text" />

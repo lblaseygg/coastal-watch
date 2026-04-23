@@ -226,98 +226,6 @@ select {
   color: var(--ink-strong);
 }
 
-.toolbar-row {
-  display: grid;
-  gap: 14px;
-  align-items: end;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--line);
-}
-
-.toolbar-search {
-  display: block;
-}
-
-.toolbar-search-input,
-.toolbar-select {
-  width: 100%;
-  min-height: 50px;
-  border: 0;
-  border-bottom: 1px solid var(--line-strong);
-  border-radius: 0;
-  background: transparent;
-  padding: 0 0 10px;
-  color: var(--ink-strong);
-  outline: none;
-  transition: border-color 160ms ease, color 160ms ease;
-}
-
-.toolbar-search-input {
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-}
-
-.toolbar-search-input::placeholder {
-  color: rgba(94, 103, 115, 0.78);
-}
-
-.toolbar-search-input:focus,
-.toolbar-select:focus {
-  border-color: rgba(20, 20, 20, 0.32);
-}
-
-.toolbar-select-wrap {
-  display: block;
-  position: relative;
-}
-
-.toolbar-select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 26px;
-  cursor: pointer;
-  color: var(--muted-strong);
-  font-size: 0.96rem;
-}
-
-.toolbar-select-wrap::after {
-  content: "";
-  position: absolute;
-  right: 2px;
-  bottom: 18px;
-  width: 9px;
-  height: 9px;
-  border-right: 1.5px solid rgba(17, 18, 20, 0.45);
-  border-bottom: 1.5px solid rgba(17, 18, 20, 0.45);
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.toolbar-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px 24px;
-}
-
-.toolbar-actions-inline {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
-}
-
-.toolbar-link {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--muted-strong);
-  transition: color 160ms ease, opacity 160ms ease;
-}
-
 .status-chip {
   display: inline-flex;
   align-items: center;
@@ -1873,14 +1781,6 @@ select {
     justify-content: flex-start;
   }
 
-  .toolbar-row {
-    grid-template-columns: 1fr;
-  }
-
-  .toolbar-actions-inline {
-    justify-content: flex-start;
-  }
-
   .site-footer {
     align-items: flex-start;
   }
@@ -1902,19 +1802,9 @@ select {
     font-size: 1.6rem;
   }
 
-  .toolbar-search-input,
-  .toolbar-select {
-    min-height: 44px;
-    padding-bottom: 10px;
-  }
 }
 
 @media (min-width: 1024px) {
-  .toolbar-row {
-    grid-template-columns: minmax(260px, 380px) 180px auto;
-    align-items: end;
-  }
-
   .legal-snapshot-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

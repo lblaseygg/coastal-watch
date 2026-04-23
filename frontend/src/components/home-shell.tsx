@@ -20,18 +20,17 @@ type HomeShellProps = {
   approvedCases: CaseRecord[];
   latestNews: NewsRecord[];
   municipalities: MunicipalityRecord[];
+  showAdmin: boolean;
 };
 
 const DRAWER_TRANSITION_MS = 420;
 const DRAWER_OPEN_DELAY_MS = 24;
 
-export default function HomeShell({ approvedCases, latestNews, municipalities }: HomeShellProps) {
+export default function HomeShell({ approvedCases, latestNews, municipalities, showAdmin }: HomeShellProps) {
   const currentYear = new Date().getFullYear();
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(null);
   const [renderedMunicipalityId, setRenderedMunicipalityId] = useState<string | null>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
 
   const municipalityById = useMemo(
     () => new Map(municipalities.map((municipality) => [municipality.id, municipality])),
@@ -104,38 +103,24 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
 
   const latestNewsPreview = useMemo(() => latestNews.slice(0, 6), [latestNews]);
   const filterCases = (municipalityId: string | null) => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
     return approvedCases.filter((currentCase) => {
       const municipalityIds = currentCase.municipality_ids.length > 0 ? currentCase.municipality_ids : [currentCase.municipality_id];
       if (municipalityId && !municipalityIds.includes(municipalityId)) {
         return false;
       }
-
-      if (statusFilter !== "all" && currentCase.status !== statusFilter) {
-        return false;
-      }
-
-      if (!normalizedQuery) {
-        return true;
-      }
-
-      return [currentCase.title, currentCase.public_summary, currentCase.category, ...currentCase.tags]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery);
+      return true;
     });
   };
 
   const filteredCases = useMemo(
     () => filterCases(selectedMunicipalityId),
-    [approvedCases, searchQuery, selectedMunicipalityId, statusFilter]
+    [approvedCases, selectedMunicipalityId]
   );
 
   const drawerMunicipalityId = selectedMunicipalityId ?? renderedMunicipalityId;
   const drawerCases = useMemo(
     () => filterCases(drawerMunicipalityId),
-    [approvedCases, drawerMunicipalityId, searchQuery, statusFilter]
+    [approvedCases, drawerMunicipalityId]
   );
 
   const selectedMunicipality = drawerMunicipalityId
@@ -233,22 +218,20 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-6">
               <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
-                Title/Name of page goes here
+                Puerto Rico Coastal Watch
               </p>
 
-              <PublicNav activeHref="/" />
+              <PublicNav activeHref="/" showAdmin={showAdmin} />
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
               <div className="max-w-4xl">
                 <h1 className="max-w-4xl text-[2.5rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[var(--ink-strong)] md:text-[4.85rem]">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                  SE ESTÁN QUEDANDO CON LA ISLA
                 </h1>
                 <p className="mt-5 max-w-[46rem] text-[1rem] leading-8 text-[var(--muted)] md:text-[1.18rem] md:leading-9">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                  Earum aperiam sint iusto error distinctio nemo, accusamus rerum 
-                  beatae nesciunt laboriosam, consequuntur quisquam cumque rem sunt repellat repellendus 
-                  et laudantium recusandae.
+                  Puerto Rico’s coasts belong to the public. This project documents and maps reported cases of blocked beach access, 
+                  illegal construction, and development in protected coastal areas across the island. 
                 </p>
               </div>
 
@@ -268,49 +251,6 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
               </div>
             </div>
 
-            <div className="toolbar-row">
-              <label className="toolbar-search" htmlFor="search-cases">
-                <span className="sr-only">Search cases</span>
-                <input
-                  className="toolbar-search-input"
-                  id="search-cases"
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search municipality, tags, or summary"
-                  value={searchQuery}
-                />
-              </label>
-
-              <label className="toolbar-select-wrap" htmlFor="status-filter">
-                <span className="sr-only">Filter by status</span>
-                <select
-                  className="toolbar-select"
-                  id="status-filter"
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                  value={statusFilter}
-                >
-                  <option value="all">All statuses</option>
-                  <option value="reported">Reported</option>
-                  <option value="monitoring">Monitoring</option>
-                  <option value="active">Active</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </label>
-
-              <div className="toolbar-actions-inline">
-                <button
-                  className="toolbar-link"
-                  onClick={() => {
-                    closeDrawer();
-                    setStatusFilter("all");
-                    setSearchQuery("");
-                  }}
-                  type="button"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
           </div>
         </header>
 
@@ -414,10 +354,12 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
         <footer className="site-footer">
           <div className="site-footer-grid">
             <div className="site-footer-brand">
-              <p className="site-footer-title">Title/Name of page goes here</p>
+              <p className="site-footer-title">Puerto Rico Coastal Watch</p>
               <p className="site-footer-text">
-                A detailed description of the project, its mission, and its impact goes here. This is a placeholder for now, 
-                but it should be replaced with real copy that captures the essence of the project and invites users to explore further.
+                Communities in Puerto Rico are losing beach access and protected coastal land to 
+                  illegal construction, privatization, and environmental destruction. 
+                  This platform documents reported cases, tracks where they are happening, and 
+                  makes that information public.
               </p>
             </div>
 
@@ -425,7 +367,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
               <p className="site-footer-heading">Coverage</p>
               <p className="site-footer-meta">Municipality-based public case tracking</p>
               <p className="site-footer-meta">Approved items only</p>
-              <p className="site-footer-meta">Fully automated coverage (soon)</p>
+              <p className="site-footer-meta">Fully automated coverage (work in progress)</p>
             </div>
 
             <div className="site-footer-column">
@@ -445,9 +387,11 @@ export default function HomeShell({ approvedCases, latestNews, municipalities }:
               <Link className="site-footer-link" href="/methodology">
                 Methodology
               </Link>
-              <Link className="site-footer-link" href="/admin">
-                Admin
-              </Link>
+              {showAdmin ? (
+                <Link className="site-footer-link" href="/admin">
+                  Admin
+                </Link>
+              ) : null}
             </nav>
           </div>
 

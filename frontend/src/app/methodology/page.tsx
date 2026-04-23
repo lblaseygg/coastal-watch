@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import PublicNav from "@/components/public-nav";
+import { getAdminSession } from "@/lib/admin-session";
 
 const principles = [
   "Only approved cases appear on public pages and public API responses.",
@@ -15,6 +17,7 @@ const boundaries = [
 ];
 
 export default function MethodologyPage() {
+  const showAdmin = Boolean(getAdminSession(cookies()));
   return (
     <main className="page-shell methodology-page-shell">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -23,7 +26,7 @@ export default function MethodologyPage() {
             <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
               Methodology
             </p>
-            <PublicNav activeHref="/methodology" />
+            <PublicNav activeHref="/methodology" showAdmin={showAdmin} />
           </div>
         </header>
 

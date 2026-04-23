@@ -1,9 +1,12 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import PublicNav from "@/components/public-nav";
 import { getPublicNews } from "@/lib/api";
+import { getAdminSession } from "@/lib/admin-session";
 
 export default async function NewsPage() {
+  const showAdmin = Boolean(getAdminSession(cookies()));
   const items = await getPublicNews({ limit: 24 });
 
   return (
@@ -16,7 +19,7 @@ export default async function NewsPage() {
                 News
               </p>
 
-              <PublicNav activeHref="/news" />
+              <PublicNav activeHref="/news" showAdmin={showAdmin} />
             </div>
 
           </div>

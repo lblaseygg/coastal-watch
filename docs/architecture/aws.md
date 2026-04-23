@@ -48,6 +48,12 @@ flowchart LR
 - EventBridge triggers the ingestion worker every 24 hours
 - The worker discovers reporting, extracts article content, and either auto-publishes trusted records or queues them for review
 
+For the current manual-operations deployment phase:
+
+- The worker and EventBridge can be omitted temporarily
+- The API should run as a plain ECS service
+- Database migrations and municipality seed should run as a one-off init task, not on every API container start
+
 ---
 
 ## Key Decisions

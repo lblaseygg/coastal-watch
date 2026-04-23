@@ -9,6 +9,25 @@ function firstHeaderValue(value: string | null): string | null {
   return first || null;
 }
 
+export function isTrustedMutationOrigin(request: NextRequest): boolean {
+  const expectedOrigin = appUrl(request, "/").origin;
+  const originHeader = firstHeaderValue(request.headers.get("origin"));
+  if (originHeader) {
+    return originHeader === expectedOrigin;
+  }
+
+  const refererHeader = firstHeaderValue(request.headers.get("referer"));
+  if (refererHeader) {
+    try {
+      return new URL(refererHeader).origin === expectedOrigin;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 export function appUrl(request: NextRequest, pathname: string): URL {
   const originHeader = firstHeaderValue(request.headers.get("origin"));
   if (originHeader) {

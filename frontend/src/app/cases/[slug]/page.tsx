@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import PublicNav from "@/components/public-nav";
 import { getApprovedCaseBySlug, getMapMunicipalities } from "@/lib/api";
+import { getAdminSession } from "@/lib/admin-session";
 
 type CaseDetailPageProps = {
   params: {
@@ -9,6 +11,7 @@ type CaseDetailPageProps = {
 };
 
 export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
+  const showAdmin = Boolean(getAdminSession(cookies()));
   const [casePayload, municipalities] = await Promise.all([
     getApprovedCaseBySlug(params.slug),
     getMapMunicipalities()
@@ -32,7 +35,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
               Case detail
             </p>
-            <PublicNav activeHref="/" />
+            <PublicNav activeHref="/" showAdmin={showAdmin} />
           </div>
         </header>
 

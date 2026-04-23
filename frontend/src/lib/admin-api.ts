@@ -1,5 +1,7 @@
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import "server-only";
+
 import { getApiBaseUrl } from "@/lib/api-base-url";
+import { getServerAdminApiToken } from "@/lib/admin-session";
 import type { CaseRecord } from "@/lib/contracts";
 
 type ApiEnvelope<T> = {
@@ -132,17 +134,21 @@ export type AdminManualCaseRecord = {
 async function fetchAdminApi<T>(
   path: string,
   options: {
-    token: string;
     actor: string;
     method?: string;
     body?: string;
   }
 ): Promise<T> {
+  const token = getServerAdminApiToken();
+  if (!token) {
+    throw new Error("Admin API token is not configured for the frontend server.");
+  }
+
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: options.method ?? "GET",
     cache: "no-store",
     headers: {
-      Authorization: `Bearer ${options.token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       "X-Admin-Actor": options.actor
     },
@@ -168,20 +174,7 @@ async function fetchAdminApi<T>(
   return payload.data;
 }
 
-export async function verifyAdminSession(token: string, actor: string): Promise<boolean> {
-  try {
-    await fetchAdminApi<{ items: AdminReviewItemSummaryRecord[] }>("/api/admin/review-items", {
-      token,
-      actor
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function getAdminReviewItems(
-  token: string,
   actor: string,
   status?: string
 ): Promise<AdminReviewItemSummaryRecord[]> {
@@ -195,7 +188,6 @@ export async function getAdminReviewItems(
   const data = await fetchAdminApi<{ items: AdminReviewItemSummaryRecord[] }>(
     `/api/admin/review-items${queryString ? `?${queryString}` : ""}`,
     {
-      token,
       actor
     }
   );
@@ -204,14 +196,12 @@ export async function getAdminReviewItems(
 }
 
 export async function getAdminReviewItem(
-  token: string,
   actor: string,
   itemId: string
 ): Promise<AdminReviewItemDetailRecord> {
   const data = await fetchAdminApi<{ item: AdminReviewItemDetailRecord }>(
     `/api/admin/review-items/${itemId}`,
     {
-      token,
       actor
     }
   );
@@ -220,7 +210,6 @@ export async function getAdminReviewItem(
 }
 
 export async function submitAdminDecision(
-  token: string,
   actor: string,
   itemId: string,
   payload: {
@@ -233,7 +222,6 @@ export async function submitAdminDecision(
   const data = await fetchAdminApi<{ item: AdminReviewItemDetailRecord }>(
     `/api/admin/review-items/${itemId}/decision`,
     {
-      token,
       actor,
       method: "POST",
       body: JSON.stringify(payload)
@@ -244,7 +232,6 @@ export async function submitAdminDecision(
 }
 
 export async function updateAdminReviewItemContent(
-  token: string,
   actor: string,
   itemId: string,
   payload: AdminAutomatedCasePayload
@@ -252,7 +239,6 @@ export async function updateAdminReviewItemContent(
   const data = await fetchAdminApi<{ item: AdminReviewItemDetailRecord }>(
     `/api/admin/review-items/${itemId}/content`,
     {
-      token,
       actor,
       method: "PUT",
       body: JSON.stringify(payload)
@@ -263,7 +249,6 @@ export async function updateAdminReviewItemContent(
 }
 
 export async function createAdminManualCase(
-  token: string,
   actor: string,
   payload: AdminManualCasePayload
 ): Promise<{
@@ -271,7 +256,6 @@ export async function createAdminManualCase(
   article: AdminReviewItemDetailRecord["article"];
 }> {
   return fetchAdminApi(`/api/admin/cases/manual`, {
-    token,
     actor,
     method: "POST",
     body: JSON.stringify(payload)
@@ -279,11 +263,9 @@ export async function createAdminManualCase(
 }
 
 export async function getAdminManualCases(
-  token: string,
   actor: string
 ): Promise<AdminManualCaseRecord[]> {
   const data = await fetchAdminApi<{ items: AdminManualCaseRecord[] }>("/api/admin/cases/manual", {
-    token,
     actor
   });
 
@@ -291,12 +273,10 @@ export async function getAdminManualCases(
 }
 
 export async function getAdminManualCase(
-  token: string,
   actor: string,
   caseId: string
 ): Promise<AdminManualCaseRecord> {
   const data = await fetchAdminApi<{ item: AdminManualCaseRecord }>(`/api/admin/cases/manual/${caseId}`, {
-    token,
     actor
   });
 
@@ -304,13 +284,11 @@ export async function getAdminManualCase(
 }
 
 export async function updateAdminManualCase(
-  token: string,
   actor: string,
   caseId: string,
   payload: AdminManualCasePayload
 ): Promise<AdminManualCaseRecord> {
   const data = await fetchAdminApi<{ item: AdminManualCaseRecord }>(`/api/admin/cases/manual/${caseId}`, {
-    token,
     actor,
     method: "PUT",
     body: JSON.stringify(payload)
@@ -319,17 +297,9 @@ export async function updateAdminManualCase(
   return data.item;
 }
 
-export async function deleteAdminManualCase(token: string, actor: string, caseId: string): Promise<void> {
+export async function deleteAdminManualCase(actor: string, caseId: string): Promise<void> {
   await fetchAdminApi(`/api/admin/cases/manual/${caseId}`, {
-    token,
     actor,
     method: "DELETE"
   });
-}
-
-export function getAdminSessionCookies() {
-  return {
-    token: ADMIN_TOKEN_COOKIE,
-    actor: ADMIN_ACTOR_COOKIE
-  };
 }

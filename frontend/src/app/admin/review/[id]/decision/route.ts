@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { submitAdminDecision } from "@/lib/admin-api";
-import { ADMIN_ACTOR_COOKIE, ADMIN_TOKEN_COOKIE } from "@/lib/admin-session";
+import { validateAdminMutationRequest } from "@/lib/admin-csrf";
+import { getAdminSession } from "@/lib/admin-session";
 import { appUrl } from "@/lib/request-origin";
 
 export async function POST(
@@ -9,13 +10,13 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const cookieStore = cookies();
-  const token = cookieStore.get(ADMIN_TOKEN_COOKIE)?.value;
-  const actor = cookieStore.get(ADMIN_ACTOR_COOKIE)?.value;
+  const adminSession = getAdminSession(cookieStore);
+  const actor = adminSession?.actor;
 
   const redirectUrl = appUrl(request, `/admin/review/${params.id}`);
   const queueRedirectUrl = appUrl(request, "/admin");
 
-  if (!token || !actor) {
+  if (!actor) {
     redirectUrl.searchParams.set("error", "session_expired");
     return NextResponse.redirect(redirectUrl, 303);
   }
@@ -25,9 +26,19 @@ export async function POST(
   const note = String(formData.get("note") ?? "").trim();
   const assignedTo = String(formData.get("assigned_to") ?? "").trim();
   const editedSummary = String(formData.get("edited_summary") ?? "").trim();
+  const csrfError = validateAdminMutationRequest(
+    request,
+    adminSession,
+    String(formData.get("csrf_token") ?? "").trim() || undefined
+  );
+
+  if (csrfError) {
+    redirectUrl.searchParams.set("error", csrfError);
+    return NextResponse.redirect(redirectUrl, 303);
+  }
 
   try {
-    await submitAdminDecision(token, actor, params.id, {
+    await submitAdminDecision(actor, params.id, {
       action,
       note: note || undefined,
       assigned_to: assignedTo || undefined,

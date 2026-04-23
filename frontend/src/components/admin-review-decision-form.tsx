@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 type AdminReviewDecisionFormProps = {
   actionUrl: string;
   actor: string;
+  csrfToken: string;
   assignedTo: string | null;
   decisionNotes: string | null;
   extractedSummary: string;
@@ -14,6 +15,7 @@ type AdminReviewDecisionFormProps = {
 export function AdminReviewDecisionForm({
   actionUrl,
   actor,
+  csrfToken,
   assignedTo,
   decisionNotes,
   extractedSummary,
@@ -50,6 +52,7 @@ export function AdminReviewDecisionForm({
 
   return (
     <form action={actionUrl} className="mt-5 grid gap-5" method="post" onSubmit={handleSubmit}>
+      <input name="csrf_token" type="hidden" value={csrfToken} />
       <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
         Assign reviewer
         <input
