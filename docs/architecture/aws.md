@@ -36,7 +36,6 @@ flowchart LR
         end
     end
 
-    Amplify --> ALB
     ALB --> API
     API --> RDS
     Init --> RDS

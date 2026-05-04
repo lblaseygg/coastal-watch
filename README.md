@@ -1,22 +1,38 @@
 # Puerto Rico Coastal Watch
 
-Puerto Rico Coastal Watch is a civic intelligence platform for tracking coastal access, development, and related public-interest issues across Puerto Rico.
+Puerto Rico Coastal Watch is a civic intelligence platform for tracking blocked beach access, development in protected coastal lands, and related public-interest issues across Puerto Rico.
 
-The current repo includes:
+The repo currently includes:
 - a public frontend in Next.js
 - a backend API in FastAPI
 - a PostgreSQL-backed Docker stack for local development
+- an admin workflow for manual case creation, review, editing, and publication
 - a worker that discovers, extracts, and routes public reporting into the system
 - full municipality seed data for Puerto Rico
-- manual admin workflows for creating, editing, and publishing cases when automation is paused
 
 ## Quick Start
 
 The fastest way to run the project is with Docker.
 
-### Start everything with Docker
+### 1. Create local env values
 
 From the repo root:
+
+```bash
+cp .env.example .env.docker
+```
+
+Set at least:
+- `POSTGRES_PASSWORD`
+- `ADMIN_API_TOKEN`
+
+Optional but recommended:
+- `ADMIN_SESSION_SECRET`
+- `TAVILY_API_KEY`
+
+`POSTGRES_PASSWORD` and `ADMIN_API_TOKEN` can be any long random values. They do not need to match anyone's personal password; they only need to be consistent within the environment where the app runs.
+
+### 2. Start the local stack
 
 ```bash
 docker compose --env-file .env.docker up --build
@@ -30,11 +46,6 @@ This starts:
 Useful URLs:
 - frontend: `http://localhost:3000`
 - API health: `http://localhost:8000/health`
-
-Required local secrets live in `.env.docker`:
-- `POSTGRES_PASSWORD`
-- `ADMIN_API_TOKEN`
-- optionally `ADMIN_SESSION_SECRET` if you want a session secret distinct from the admin token
 
 Run in the background:
 
@@ -54,6 +65,16 @@ Rebuild after changes:
 docker compose --env-file .env.docker up --build -d
 ```
 
+### 3. Optional: run the worker locally
+
+The worker is not part of the default Docker stack. It is available behind the `worker` profile:
+
+```bash
+docker compose --env-file .env.docker --profile worker up --build worker
+```
+
+This is useful for local ingestion testing when `TAVILY_API_KEY` is set.
+
 ## Local Development Without Docker
 
 You can also run the frontend and backend separately.
@@ -63,11 +84,8 @@ You can also run the frontend and backend separately.
 ```bash
 cd frontend
 npm install
-npm run dev
+API_BASE_URL=http://localhost:8000 npm run dev
 ```
-
-Frontend dev server:
-- `http://localhost:3000`
 
 Useful frontend commands:
 
@@ -87,62 +105,64 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Run migrations:
+Set a local database URL and admin token in your shell or a local `.env`, then run:
 
 ```bash
 alembic upgrade head
-```
-
-Seed the local database:
-
-```bash
 python -m app.seed
-```
-
-Start the API:
-
-```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Backend URL:
+Useful backend URL:
 - `http://localhost:8000`
-
-Health check:
-- `http://localhost:8000/health`
 
 ### Worker
 
-The worker uses Tavily for discovery and page extraction, then applies Coastal Watch's
-local extraction and routing rules.
+The worker uses Tavily for discovery and page extraction, then applies Coastal Watch's local extraction and routing rules.
 
-If you are operating in manual mode because Tavily credits are unavailable, you can skip the worker entirely and use the admin UI to create and edit public cases directly.
-
-Run the worker against the Docker Postgres database:
+Run the worker against the local Docker Postgres database:
 
 ```bash
 cd /Users/blasey/Developer/coastal-watch
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli run-once --max-results 8 --limit 20
+DATABASE_URL=postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli run-once --max-results 8 --limit 20
 ```
 
 Useful worker commands:
 
 ```bash
-# discovery only
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli discover --max-results 8
-
-# rebuild extracted/routed state from already-cleaned articles
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli reprocess --limit 500
+DATABASE_URL=postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli discover --max-results 8
+DATABASE_URL=postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/coastal_watch PYTHONPATH=worker:backend backend/.venv/bin/python -m worker.cli reprocess --limit 500
 ```
 
-### Frontend talking to local backend
+Replace `YOUR_PASSWORD` with the same value used for `POSTGRES_PASSWORD` in your local environment.
 
-If you run both services locally outside Docker, start the frontend with:
+## Admin Access
 
-```bash
-cd frontend
-API_BASE_URL=http://localhost:8000 npm run dev
-```
+Admin access now uses a signed frontend session cookie instead of storing the raw backend admin bearer token in the browser.
+
+Current behavior:
+- public users do not see the `Admin` nav item
+- `/admin` prompts for sign-in when no valid admin session exists
+- the frontend verifies the submitted admin token server-side
+- the browser receives a signed admin session cookie
+- the frontend server uses its own `ADMIN_API_TOKEN` env var to call backend admin endpoints
+
+If you set `ADMIN_SESSION_SECRET`, it is used to sign the admin session cookie explicitly. If you omit it locally, the app falls back to `ADMIN_API_TOKEN`, but a separate `ADMIN_SESSION_SECRET` is recommended.
+
+Admin mutations are protected with:
+- signed CSRF tokens
+- same-origin `Origin` / `Referer` checks
+
+## Manual Operations Mode
+
+The project can currently run in a production-friendly manual mode without the worker.
+
+That means:
+- frontend, API, and database are live
+- admin users can create, edit, review, and publish content manually
+- worker scheduling can stay disabled until external API credits or automation needs return
+
+This is the current recommended deployment mode.
 
 ## Current Architecture
 
@@ -150,7 +170,7 @@ API_BASE_URL=http://localhost:8000 npm run dev
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- MapSVG municipality SVG map
+- SVG municipality map
 
 ### Backend
 - FastAPI
@@ -165,39 +185,31 @@ API_BASE_URL=http://localhost:8000 npm run dev
 - rule-based routing for auto-publish vs review
 
 ### Database
-- PostgreSQL in Docker
-- local SQLite/Alembic-friendly setup also exists for backend workflows
+- PostgreSQL
 
 ## How It Works
 
 ### Public app
-1. The frontend loads municipalities and approved cases from the API
-2. Users browse the Puerto Rico map
-3. Clicking a municipality opens its related cases
-4. `/news` and municipality hover cards show public reporting linked to municipalities
-5. Case detail pages show summaries and linked sources
+1. The frontend loads municipalities and approved cases from the API.
+2. Users browse the Puerto Rico map and related case/news views.
+3. Case detail pages show summaries and linked sources.
 
 ### Backend
-The API currently exposes public endpoints for:
-- map municipality data
-- case list data
-- case detail data
+The API exposes public endpoints for:
+- municipality data
+- case list and case detail data
 - public news feed
 - health checks
 
-### Admin access
-- `/admin` is hidden from public navigation unless a valid admin session exists
-- admin sign-in uses the shared `ADMIN_API_TOKEN`
-- the browser stores a signed admin session cookie, not the raw bearer token
-- admin mutations are protected with signed CSRF tokens and same-origin checks
+It also exposes admin-only endpoints used by the signed-session admin workflow.
 
 ### Automation flow
-1. Tavily Search discovers candidate public reporting
-2. Tavily Extract retrieves article content
-3. The worker classifies municipality, category, and summary
-4. Trusted, high-confidence items auto-publish
-5. Ambiguous or sensitive items go to admin review
-6. The API exposes only public/approved records to the map and news feed
+1. Tavily Search discovers candidate reporting.
+2. Tavily Extract retrieves article content.
+3. The worker classifies municipality, category, and summary.
+4. Trusted, high-confidence items auto-publish.
+5. Ambiguous or sensitive items go to admin review.
+6. The API exposes only public or approved records to the map and news feed.
 
 ### Seed data
 The repo includes seed files for:
@@ -210,37 +222,47 @@ These are loaded by:
 python -m app.seed
 ```
 
-## Manual Operations Mode
+## AWS Deployment Direction
 
-The app can run without the worker.
+The current AWS target is:
+- frontend on AWS Amplify
+- API on ECS Fargate behind an Application Load Balancer
+- PostgreSQL on Amazon RDS
+- admin and app secrets in AWS-managed secret storage
+- one-off database init task for migrations and municipality seed
+- worker omitted initially in manual-operations mode
 
-In manual mode:
-- the public site still serves approved cases and linked source articles
-- admins use `/admin` to review, edit, and publish records
-- manual case creation can be used when Tavily credits are paused or automation is intentionally disabled
+See:
+- [AWS Architecture](/Users/blasey/Developer/coastal-watch/docs/architecture/aws.md)
+- [AWS Portfolio Diagram](/Users/blasey/Developer/coastal-watch/docs/architecture/aws-portfolio-diagram.md)
 
-This is the current recommended deployment mode until worker scheduling and Tavily usage are re-enabled in production.
+Production startup split:
+- local Docker API startup: `backend/docker-dev-entrypoint.sh`
+- production API startup: `backend/docker-entrypoint.sh`
+- one-off production DB init: `backend/docker-init.sh`
 
 ## Project Status
 
 Implemented:
 - public frontend
 - SVG municipality map
-- municipality case drawer
+- municipality case and news views
 - case detail pages
-- public news page and municipality hover news
 - public backend API
 - database models and migrations
 - Docker local stack
-- admin review, signed session auth, and CSRF protection
-- automated discovery/extraction/routing worker
-- trusted-source auto-publish pipeline
-- AWS-ready split between API startup and one-off database init tasks
+- admin review, manual editing, and manual case workflows
+- signed admin session auth
+- CSRF protection for admin mutations
+- heuristic discovery/extraction/routing worker
+- AWS-safe split between API startup and one-off database init
 
-Still to do:
-- production deployment rollout
-- model-based extraction beyond the current heuristic worker
-- worker reintroduction in production when credits and scheduling are ready
+Still left:
+- complete the AWS deployment rollout
+- validate production manual-operations mode end-to-end
+- add production monitoring, alerts, and backups
+- reintroduce worker scheduling when external API credits return
+- extend extraction/linking beyond the current heuristic worker
 
 ## Repo Structure
 
@@ -256,12 +278,10 @@ coastal-watch/
 
 ## Notes
 
-- The frontend currently uses a clean SVG map instead of Leaflet for the main public UI.
-- In local Docker, the backend service runs migrations and municipality seed data through `backend/docker-dev-entrypoint.sh`.
-- In production, the API container should start with `backend/docker-entrypoint.sh` only, and migrations/seed should run as a one-off init step via `backend/docker-init.sh`.
-- The worker currently uses rule-based extraction and summarization; it is automated, but not yet model-based.
-- The current AWS deployment direction is: Amplify frontend, ECS Fargate API, RDS PostgreSQL, and a separate one-off init task. The worker can be omitted temporarily in manual-operations mode.
-- Local docs and planning files may exist in the repo but are not required to start the environment.
+- Cloning the repo does not clone anyone's live database contents.
+- A fresh local Docker run creates a new local Postgres volume and seeds municipalities from the committed seed files.
+- The frontend currently uses a clean SVG municipality map instead of Leaflet for the main public UI.
+- The worker is available locally, but it is not required for the current production rollout.
 
 ## License
 
