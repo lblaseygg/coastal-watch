@@ -12,12 +12,14 @@ class WorkerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = f"sqlite:///{REPO_ROOT / 'backend' / 'coastal_watch.db'}"
-    tavily_api_key: str | None = None
+    openai_api_key: str | None = None
     worker_user_agent: str = "PuertoRicoCoastalWatchWorker/0.1"
     worker_log_level: str = "INFO"
-    extraction_model_name: str = "heuristic-v1"
-    tavily_search_retry_attempts: int = 3
-    tavily_extract_retry_attempts: int = 3
+    search_model_name: str = "gpt-5.4"
+    extraction_model_name: str = "gpt-5.4-mini"
+    openai_search_retry_attempts: int = 3
+    openai_extraction_retry_attempts: int = 3
+    fetch_retry_attempts: int = 3
     case_link_candidate_limit: int = 8
     case_link_min_similarity: float = 0.34
     discovery_queries: list[str] = [
@@ -227,12 +229,9 @@ class WorkerSettings(BaseSettings):
         "educación ambiental",
     ]
     search_topic: str = "news"
-    search_depth: str = "basic"
     search_time_range: str = "year"
     discovery_include_raw_content: bool = False
-    tavily_extract_depth: str = "basic"
-    tavily_extract_format: str = "text"
-    tavily_extract_timeout: float | None = 20.0
+    fetch_timeout: float | None = 20.0
     auto_publish_trusted_publishers: list[str] = [
         "elnuevodia.com",
         "endi.com",

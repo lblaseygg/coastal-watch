@@ -42,8 +42,8 @@ flowchart TB
     end
 
     subgraph External["External Services"]
-        Search[Tavily Search API]
-        Extract[Tavily Extract API]
+        Search[OpenAI Web Search]
+        Extract[OpenAI Responses API]
     end
 
     actor1 --> FE
@@ -123,12 +123,12 @@ Responsible for data storage and system performance:
 ---
 
 ### External Services
-- Tavily Search API
-- Tavily Extract API
+- OpenAI Web Search
+- OpenAI Responses API
 
 Provides external capabilities:
-- Search API finds relevant articles
-- Extract API retrieves article content from discovered URLs
+- Web search finds relevant articles
+- OpenAI extraction turns cleaned article text into structured case data
 
 ---
 

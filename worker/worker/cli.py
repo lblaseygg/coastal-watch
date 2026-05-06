@@ -15,10 +15,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Puerto Rico Coastal Watch worker")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    discover_parser = subparsers.add_parser("discover", help="Discover candidate URLs from Tavily")
+    discover_parser = subparsers.add_parser("discover", help="Discover candidate URLs with OpenAI web search")
     discover_parser.add_argument("--max-results", type=int, default=5)
+    discover_parser.add_argument("--fast", action="store_true", help="Run a minimal smoke-test discovery pass")
 
-    fetch_parser = subparsers.add_parser("fetch", help="Fetch and clean queued articles")
+    fetch_parser = subparsers.add_parser("fetch", help="Fetch and clean queued articles from discovered URLs")
     fetch_parser.add_argument("--limit", type=int, default=10)
 
     extract_parser = subparsers.add_parser("extract", help="Extract structured data from cleaned articles")
@@ -39,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run-once", help="Run discovery, fetch, extract, and routing once")
     run_parser.add_argument("--max-results", type=int, default=5)
     run_parser.add_argument("--limit", type=int, default=10)
+    run_parser.add_argument("--fast", action="store_true", help="Run a minimal smoke-test discovery pass")
 
     return parser
 
@@ -51,8 +53,14 @@ def main() -> None:
 
     with get_session() as session:
         if args.command == "discover":
-            log_event(logger, "worker.command.start", command=args.command, max_results=args.max_results)
-            print(discover_articles(session, max_results=args.max_results))
+            log_event(
+                logger,
+                "worker.command.start",
+                command=args.command,
+                max_results=args.max_results,
+                fast=args.fast,
+            )
+            print(discover_articles(session, max_results=args.max_results, fast=args.fast))
             return
 
         if args.command == "fetch":
@@ -90,9 +98,10 @@ def main() -> None:
                 command=args.command,
                 max_results=args.max_results,
                 limit=args.limit,
+                fast=args.fast,
             )
             try:
-                discovered = discover_articles(session, max_results=args.max_results)
+                discovered = discover_articles(session, max_results=args.max_results, fast=args.fast)
             except Exception as exc:
                 log_event(
                     logger,

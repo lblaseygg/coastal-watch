@@ -28,7 +28,7 @@ Set at least:
 
 Optional but recommended:
 - `ADMIN_SESSION_SECRET`
-- `TAVILY_API_KEY`
+- `OPENAI_API_KEY`
 
 `POSTGRES_PASSWORD` and `ADMIN_API_TOKEN` can be any long random values. They do not need to match anyone's personal password; they only need to be consistent within the environment where the app runs.
 
@@ -73,7 +73,7 @@ The worker is not part of the default Docker stack. It is available behind the `
 docker compose --env-file .env.docker --profile worker up --build worker
 ```
 
-This is useful for local ingestion testing when `TAVILY_API_KEY` is set.
+This is useful for local ingestion testing when `OPENAI_API_KEY` is set.
 
 ## Local Development Without Docker
 
@@ -118,7 +118,7 @@ Useful backend URL:
 
 ### Worker
 
-The worker uses Tavily for discovery and page extraction, then applies Coastal Watch's local extraction and routing rules.
+The worker uses OpenAI web search plus structured extraction, with a local fallback classifier if the model call fails.
 
 Run the worker against the local Docker Postgres database:
 
@@ -179,9 +179,9 @@ This is the current recommended deployment mode.
 - Pydantic
 
 ### Worker
-- Tavily Search for discovery
-- Tavily Extract for article content
-- heuristic classification and summarization
+- OpenAI web search for discovery
+- direct HTTP fetch for article content cleanup
+- OpenAI structured extraction with heuristic fallback
 - rule-based routing for auto-publish vs review
 
 ### Database
@@ -204,9 +204,9 @@ The API exposes public endpoints for:
 It also exposes admin-only endpoints used by the signed-session admin workflow.
 
 ### Automation flow
-1. Tavily Search discovers candidate reporting.
-2. Tavily Extract retrieves article content.
-3. The worker classifies municipality, category, and summary.
+1. OpenAI web search discovers candidate reporting.
+2. The worker fetches and cleans article content from discovered URLs.
+3. OpenAI structured extraction classifies municipality, category, and summary.
 4. Trusted, high-confidence items auto-publish.
 5. Ambiguous or sensitive items go to admin review.
 6. The API exposes only public or approved records to the map and news feed.

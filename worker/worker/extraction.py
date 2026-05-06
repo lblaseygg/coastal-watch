@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+import json
+import logging
 import re
 
 from sqlalchemy import select
@@ -10,6 +12,7 @@ from sqlalchemy.orm import Session
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
 from worker.logging_utils import get_logger, log_event
+from worker.openai_utils import get_openai_client, parse_json_output
 from worker.utils import make_id, normalize_text, split_sentences, utcnow
 
 from app.models import Article, ArticleExtraction, Municipality
@@ -443,6 +446,7 @@ CONFLICT_SCOPE_KEYWORDS = [
 
 @dataclass
 class ExtractionDraft:
+    model_name: str
     relevance: str
     confidence_score: float
     extracted_case_title: str
@@ -772,6 +776,7 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
     claims = select_claims(article.cleaned_text, category_keywords, municipality_names)
 
     return ExtractionDraft(
+        model_name="heuristic-v1",
         relevance=relevance,
         confidence_score=confidence,
         extracted_case_title=build_case_title(article, municipality_ids, category),
@@ -786,6 +791,135 @@ def classify_article(article: Article, municipalities: list[Municipality]) -> Ex
         claims=claims,
         sensitive_flags=sorted(set(sensitivity_flags)),
         needs_review=relevance != "relevant" or confidence < 0.78 or bool(sensitivity_flags),
+    )
+
+
+def classify_article_with_openai(article: Article, municipalities: list[Municipality]) -> ExtractionDraft:
+    client = get_openai_client()
+    municipality_catalog = [
+        {"id": municipality.id, "name": municipality.name}
+        for municipality in municipalities
+    ]
+    allowed_ids = {municipality["id"] for municipality in municipality_catalog}
+    prompt = (
+        "You are classifying Puerto Rico coastal reporting for a civic monitoring system.\n"
+        "Return JSON only with this shape:\n"
+        "{"
+        '"relevance":"relevant|unclear|irrelevant",'
+        '"confidence_score":0.0,'
+        '"extracted_case_title":"...",'
+        '"extracted_summary":"...",'
+        '"category":"access_restriction|development|environmental_concern|policy_or_permitting",'
+        '"municipality_ids":["..."],'
+        '"claims":[{"text":"...","evidence_snippet":"...","sensitive":true}],'
+        '"sensitive_flags":["..."],'
+        '"needs_review":true'
+        "}\n"
+        "Only use municipality IDs from this catalog:\n"
+        f"{json.dumps(municipality_catalog, ensure_ascii=False)}\n"
+        "If the article does not fit the tracker, mark it irrelevant."
+    )
+    last_error: Exception | None = None
+    attempts = max(1, settings.openai_extraction_retry_attempts)
+    response = None
+    for attempt in range(1, attempts + 1):
+        try:
+            response = client.responses.create(
+                model=settings.extraction_model_name,
+                input=(
+                    f"{prompt}\n"
+                    f"Publisher: {article.publisher}\n"
+                    f"URL: {article.url}\n"
+                    f"Title: {article.title}\n"
+                    f"Cleaned article text:\n{article.cleaned_text[:12000]}"
+                ),
+            )
+            break
+        except Exception as exc:
+            last_error = exc
+            log_event(
+                logger,
+                "extraction.openai_retry",
+                level=logging.WARNING if attempt < attempts else logging.ERROR,
+                article_id=article.id,
+                url=article.url,
+                attempt=attempt,
+                retry_attempts=attempts,
+                error=str(exc),
+            )
+
+    if response is None:
+        raise last_error or ValueError("OpenAI extraction did not return a response")
+
+    payload = parse_json_output(response.output_text)
+    municipality_ids = [
+        municipality_id
+        for municipality_id in payload.get("municipality_ids", [])
+        if municipality_id in allowed_ids
+    ][:2]
+    claims = []
+    for claim in payload.get("claims", [])[:3]:
+        if not isinstance(claim, dict):
+            continue
+        claim_text = str(claim.get("text", "")).strip()[:280]
+        evidence_snippet = str(claim.get("evidence_snippet", claim_text)).strip()[:280]
+        if not claim_text:
+            continue
+        claims.append(
+            {
+                "text": claim_text,
+                "evidence_snippet": evidence_snippet,
+                "sensitive": bool(claim.get("sensitive", False)),
+            }
+        )
+
+    confidence_score = payload.get("confidence_score", 0.5)
+    try:
+        confidence_score = float(confidence_score)
+    except (TypeError, ValueError):
+        confidence_score = 0.5
+
+    category = str(payload.get("category", "policy_or_permitting")).strip() or "policy_or_permitting"
+    if category not in {
+        "access_restriction",
+        "development",
+        "environmental_concern",
+        "policy_or_permitting",
+    }:
+        category = "policy_or_permitting"
+
+    relevance = str(payload.get("relevance", "unclear")).strip() or "unclear"
+    if relevance not in {"relevant", "unclear", "irrelevant"}:
+        relevance = "unclear"
+
+    summary = str(payload.get("extracted_summary", "")).strip()[:480]
+    case_title = str(payload.get("extracted_case_title", "")).strip()[:255]
+    sensitive_flags = sorted(
+        {str(flag).strip() for flag in payload.get("sensitive_flags", []) if str(flag).strip()}
+    )
+    needs_review = bool(payload.get("needs_review", True))
+
+    if not summary or not case_title:
+        raise ValueError("OpenAI extraction response was missing required summary/title fields")
+
+    return ExtractionDraft(
+        model_name=settings.extraction_model_name,
+        relevance=relevance,
+        confidence_score=max(0.0, min(1.0, round(confidence_score, 2))),
+        extracted_case_title=case_title,
+        extracted_summary=summary,
+        category=category,
+        municipality_ids=municipality_ids,
+        claims=claims
+        or [
+            {
+                "text": summary[:280],
+                "evidence_snippet": summary[:280],
+                "sensitive": bool(sensitive_flags),
+            }
+        ],
+        sensitive_flags=sensitive_flags,
+        needs_review=needs_review,
     )
 
 
@@ -805,7 +939,18 @@ def extract_articles(session: Session, limit: int = 10) -> dict[str, int]:
         if article.id in existing_article_ids:
             continue
 
-        draft = classify_article(article, municipalities)
+        try:
+            draft = classify_article_with_openai(article, municipalities)
+        except Exception as exc:
+            log_event(
+                logger,
+                "extraction.openai_fallback",
+                level=logging.WARNING,
+                article_id=article.id,
+                url=article.url,
+                error=str(exc),
+            )
+            draft = classify_article(article, municipalities)
         extraction = ArticleExtraction(
             id=make_id("ext"),
             article_id=article.id,
@@ -819,7 +964,7 @@ def extract_articles(session: Session, limit: int = 10) -> dict[str, int]:
             claims=draft.claims,
             sensitive_flags=draft.sensitive_flags,
             needs_review=draft.needs_review,
-            model_name=settings.extraction_model_name,
+            model_name=draft.model_name,
             created_at=utcnow(),
         )
         session.add(extraction)

@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 from worker.bootstrap import BACKEND_ROOT  # noqa: F401
 from worker.core.config import settings
 from worker.logging_utils import get_logger, log_event
+from worker.openai_utils import get_openai_client, parse_json_output
 from worker.utils import infer_publisher_from_url, make_id, normalize_text, parse_optional_datetime, utcnow
 
 from app.models import Article
-from tavily import TavilyClient
 
 
 logger = get_logger("worker.discovery")
@@ -44,52 +44,61 @@ class RelevanceMatch:
         return (access_match or development_match) and not bool(self.excluded_terms)
 
 
-class TavilySearchClient:
+class OpenAISearchClient:
     def __init__(self) -> None:
-        if not settings.tavily_api_key:
-            raise ValueError("TAVILY_API_KEY is not configured")
-
-        self._client = TavilyClient(api_key=settings.tavily_api_key)
+        self._client = get_openai_client()
 
     def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
-        payload = self._client.search(
-            query=query,
-            search_depth=settings.search_depth,
-            topic=settings.search_topic,
-            time_range=settings.search_time_range,
-            max_results=max_results,
-            include_domains=settings.discovery_domains or None,
-            exclude_domains=settings.discovery_exclude_domains or None,
-            include_raw_content=settings.discovery_include_raw_content,
+        tool: dict[str, object] = {"type": "web_search"}
+        if settings.discovery_domains:
+            tool["filters"] = {"allowed_domains": settings.discovery_domains}
+
+        response = self._client.responses.create(
+            model=settings.search_model_name,
+            tools=[tool],
+            tool_choice="auto",
+            input=(
+                "Search for public reporting relevant to Puerto Rico coastal access restrictions, "
+                "coastal development in protected lands, or environmental harm tied to coastal construction. "
+                'Return JSON only with this shape: {"results":[{"url":"...","title":"...","snippet":"...",'
+                '"publisher":"...","published_at":"..."}]}. '
+                f"Return at most {max_results} results.\n"
+                f"Search topic: {settings.search_topic}\n"
+                f"Time range: {settings.search_time_range}\n"
+                f"User query: {query}"
+            ),
         )
+        payload = parse_json_output(response.output_text)
+        raw_results = payload.get("results", []) if isinstance(payload, dict) else []
 
         results: list[SearchResult] = []
-        for item in payload.get("results", []):
+        for item in raw_results:
             url = read_value(item, "url")
             title = read_value(item, "title")
             if not url or not title:
                 continue
 
-            snippet = read_value(item, "raw_content") if settings.discovery_include_raw_content else None
-            if not snippet:
-                snippet = read_value(item, "content") or ""
+            if any(excluded in url for excluded in settings.discovery_exclude_domains):
+                continue
+
+            snippet = read_value(item, "snippet") or ""
 
             results.append(
                 SearchResult(
                     url=url,
                     title=title,
                     snippet=snippet,
-                    publisher=infer_publisher_from_url(url),
-                    published_at=read_value(item, "published_date") or read_value(item, "date"),
+                    publisher=read_value(item, "publisher") or infer_publisher_from_url(url),
+                    published_at=read_value(item, "published_at") or read_value(item, "published_date") or read_value(item, "date"),
                 )
             )
 
         return results
 
 
-def search_with_retry(client: TavilySearchClient, query: str, max_results: int) -> list[SearchResult]:
+def search_with_retry(client: OpenAISearchClient, query: str, max_results: int) -> list[SearchResult]:
     last_error: Exception | None = None
-    attempts = max(1, settings.tavily_search_retry_attempts)
+    attempts = max(1, settings.openai_search_retry_attempts)
 
     for attempt in range(1, attempts + 1):
         try:
@@ -113,8 +122,11 @@ def search_with_retry(client: TavilySearchClient, query: str, max_results: int) 
     return []
 
 
-def build_discovery_queries() -> list[str]:
+def build_discovery_queries(*, fast: bool = False) -> list[str]:
     queries = list(settings.discovery_queries)
+    if fast:
+        return queries[:1] if queries else ["bloquean acceso a la playa Puerto Rico"]
+
     municipalities = settings.discovery_priority_municipalities
     batch_size = max(0, settings.discovery_priority_batch_size)
     if batch_size > 0 and municipalities:
@@ -317,15 +329,27 @@ def upsert_discovered_article(session: Session, result: SearchResult) -> bool:
     return True
 
 
-def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
-    client = TavilySearchClient()
+def discover_articles(session: Session, max_results: int = 5, *, fast: bool = False) -> dict[str, int]:
+    client = OpenAISearchClient()
     discovered = 0
     filtered_out = 0
     seen_urls: set[str] = set()
-    for query in build_discovery_queries():
+    effective_max_results = 1 if fast else max_results
+    queries = build_discovery_queries(fast=fast)
+
+    log_event(
+        logger,
+        "discovery.start",
+        max_results=effective_max_results,
+        fast=fast,
+        query_count=len(queries),
+    )
+
+    for query in queries:
         query_discovered = 0
         query_filtered = 0
-        for result in search_with_retry(client, query=query, max_results=max_results):
+        log_event(logger, "discovery.query_start", query=query, max_results=effective_max_results, fast=fast)
+        for result in search_with_retry(client, query=query, max_results=effective_max_results):
             if result.url in seen_urls:
                 continue
             seen_urls.add(result.url)
@@ -357,7 +381,7 @@ def discover_articles(session: Session, max_results: int = 5) -> dict[str, int]:
             logger,
             "discovery.query_complete",
             query=query,
-            max_results=max_results,
+            max_results=effective_max_results,
             discovered=query_discovered,
             filtered_out=query_filtered,
         )

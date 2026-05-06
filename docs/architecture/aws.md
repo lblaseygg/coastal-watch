@@ -41,8 +41,8 @@ flowchart LR
     Init --> RDS
 
     EventBridge[EventBridge Scheduler] --> Worker
-    Worker --> Search[Tavily Search API]
-    Worker --> Extract[Tavily Extract API]
+    Worker --> Search[OpenAI Web Search]
+    Worker --> Extract[OpenAI Responses API]
     Worker --> RDS
 ```
 
@@ -60,7 +60,7 @@ flowchart LR
 - Database → Amazon RDS (PostgreSQL)
 - Scheduler → EventBridge
 - Networking → VPC with public and private subnets
-- External APIs → Tavily Search + Tavily Extract
+- External APIs → OpenAI Web Search + OpenAI Responses API
 
 ---
 
@@ -82,7 +82,7 @@ The intended traffic pattern is:
 - API requests go to the ALB over HTTPS
 - The ALB forwards traffic to ECS API tasks on port `8000`
 - ECS API tasks connect privately to RDS on port `5432`
-- The worker, when enabled, runs privately and reaches Tavily through outbound internet access
+- The worker, when enabled, runs privately and reaches OpenAI through outbound internet access
 
 Recommended security-group boundaries:
 
@@ -106,7 +106,7 @@ RDS should not be publicly accessible.
 - The ALB forwards requests to the API service running on ECS Fargate
 - The API reads and writes data to RDS over private networking
 - EventBridge triggers the ingestion worker every 24 hours when automation is enabled
-- The worker discovers reporting, extracts article content, and either auto-publishes trusted records or queues them for review
+- The worker discovers reporting, extracts structured case data, and either auto-publishes trusted records or queues them for review
 
 For the current manual-operations deployment phase:
 
