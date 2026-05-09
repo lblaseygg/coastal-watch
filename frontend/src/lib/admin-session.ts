@@ -1,6 +1,10 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import {
+  GENERATED_ADMIN_API_TOKEN,
+  GENERATED_ADMIN_SESSION_SECRET
+} from "@/lib/runtime-secrets.generated";
 
 export const ADMIN_SESSION_COOKIE = "coastal_watch_admin_session";
 export const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 12;
@@ -25,7 +29,13 @@ function fromBase64Url(value: string): string {
 }
 
 function getAdminSessionSecret(): string | null {
-  return process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_API_TOKEN ?? null;
+  const configuredSecret =
+    process.env.ADMIN_SESSION_SECRET ??
+    process.env.ADMIN_API_TOKEN ??
+    GENERATED_ADMIN_SESSION_SECRET ??
+    GENERATED_ADMIN_API_TOKEN;
+
+  return configuredSecret || null;
 }
 
 type SignedPayload = {
@@ -34,7 +44,8 @@ type SignedPayload = {
 };
 
 export function getServerAdminApiToken(): string | null {
-  return process.env.ADMIN_API_TOKEN ?? null;
+  const configuredToken = process.env.ADMIN_API_TOKEN ?? GENERATED_ADMIN_API_TOKEN;
+  return configuredToken || null;
 }
 
 function signSessionPayload(encodedPayload: string, secret: string): string {
