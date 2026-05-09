@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from html import unescape
 import logging
-import re
 
-import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,6 +12,7 @@ from worker.logging_utils import get_logger, log_event
 from worker.utils import infer_publisher_from_url, sha256_text, utcnow
 
 from app.models import Article
+from tavily import TavilyClient
 
 
 logger = get_logger("worker.fetching")
@@ -27,60 +25,57 @@ class ExtractResult:
     title: str | None = None
 
 
-class HttpExtractClient:
+def read_value(item: object, key: str) -> str | None:
+    if isinstance(item, dict):
+        value = item.get(key)
+    else:
+        value = getattr(item, key, None)
+    return str(value) if value is not None else None
+
+
+class TavilyExtractClient:
     def __init__(self) -> None:
-        timeout = settings.fetch_timeout if settings.fetch_timeout is not None else 20.0
-        self._client = httpx.Client(
-            follow_redirects=True,
-            timeout=timeout,
-            headers={
-                "User-Agent": settings.worker_user_agent,
-                "Accept-Language": "es,en;q=0.9",
-            },
-        )
+        if not settings.tavily_api_key:
+            raise ValueError("TAVILY_API_KEY is not configured")
+
+        self._client = TavilyClient(api_key=settings.tavily_api_key)
 
     def extract(self, urls: list[str]) -> tuple[list[ExtractResult], set[str]]:
+        payload = self._client.extract(
+            urls=urls,
+            extract_depth=settings.tavily_extract_depth,
+            format=settings.tavily_extract_format,
+            timeout=settings.tavily_extract_timeout,
+            include_images=False,
+            include_favicon=False,
+        )
+
         results: list[ExtractResult] = []
-        failed_urls: set[str] = set()
-
-        for url in urls:
-            try:
-                response = self._client.get(url)
-                response.raise_for_status()
-            except Exception:
-                failed_urls.add(url)
+        for item in payload.get("results", []):
+            url = read_value(item, "url")
+            raw_content = read_value(item, "raw_content") or read_value(item, "content")
+            if not url or not raw_content:
                 continue
-
-            if is_unsupported_content(response):
-                failed_urls.add(url)
-                log_event(
-                    logger,
-                    "fetch.article_skipped",
-                    article_url=url,
-                    reason="unsupported_content_type",
-                    content_type=response.headers.get("content-type", ""),
-                )
-                continue
-
-            raw_content, title = extract_readable_text(response.text)
-            if not raw_content:
-                failed_urls.add(url)
-                continue
-
             results.append(
                 ExtractResult(
                     url=url,
                     raw_content=raw_content,
-                    title=title,
+                    title=read_value(item, "title"),
                 )
             )
+
+        failed_urls: set[str] = set()
+        for item in payload.get("failed_results", []):
+            url = read_value(item, "url")
+            if url:
+                failed_urls.add(url)
 
         return results, failed_urls
 
 
-def extract_with_retry(client: HttpExtractClient, urls: list[str]) -> tuple[list[ExtractResult], set[str]]:
+def extract_with_retry(client: TavilyExtractClient, urls: list[str]) -> tuple[list[ExtractResult], set[str]]:
     last_error: Exception | None = None
-    attempts = max(1, settings.fetch_retry_attempts)
+    attempts = max(1, settings.tavily_extract_retry_attempts)
 
     for attempt in range(1, attempts + 1):
         try:
@@ -104,35 +99,8 @@ def extract_with_retry(client: HttpExtractClient, urls: list[str]) -> tuple[list
 
 
 def clean_extracted_content(content: str) -> str:
-    cleaned_text = content.replace("\x00", "").strip()
+    cleaned_text = content.strip()
     return cleaned_text[:20000]
-
-
-def is_unsupported_content(response: httpx.Response) -> bool:
-    content_type = (response.headers.get("content-type") or "").lower()
-    if "application/pdf" in content_type:
-        return True
-    if "application/octet-stream" in content_type:
-        return True
-    if response.url.path.lower().endswith(".pdf"):
-        return True
-    if response.content.startswith(b"%PDF"):
-        return True
-    return False
-
-
-def extract_readable_text(html: str) -> tuple[str, str | None]:
-    html = html.replace("\x00", "")
-    title_match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-    title = unescape(title_match.group(1)).strip() if title_match else None
-
-    stripped = re.sub(r"(?is)<(script|style|noscript|svg|iframe).*?>.*?</\1>", " ", html)
-    stripped = re.sub(r"(?i)<br\s*/?>", "\n", stripped)
-    stripped = re.sub(r"(?i)</p>", "\n", stripped)
-    stripped = re.sub(r"<[^>]+>", " ", stripped)
-    stripped = unescape(stripped)
-    stripped = re.sub(r"\s+", " ", stripped).strip()
-    return stripped[:40000], title[:500] if title else None
 
 
 def chunked_urls(urls: list[str], size: int = 20) -> list[list[str]]:
@@ -150,7 +118,7 @@ def fetch_queued_articles(session: Session, limit: int = 10) -> dict[str, int]:
     if not articles:
         return {"cleaned": 0, "failed": 0}
 
-    client = HttpExtractClient()
+    client = TavilyExtractClient()
     article_by_url = {article.url: article for article in articles}
     cleaned = 0
     failed = 0

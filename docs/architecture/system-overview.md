@@ -19,8 +19,8 @@ sequenceDiagram
     participant API
     participant DB
     participant Worker
-    participant OpenAISearch as OpenAI Web Search
-    participant OpenAIExtract as OpenAI Extraction
+    participant TavilySearch as Tavily Search
+    participant TavilyExtract as Tavily Extract
     participant Admin
 
     User->>Frontend: Open app
@@ -29,10 +29,10 @@ sequenceDiagram
     DB-->>API: Return data
     API-->>Frontend: Response
 
-    Worker->>OpenAISearch: Discover candidate reporting
-    OpenAISearch-->>Worker: URLs, titles, snippets
-    Worker->>OpenAIExtract: Extract structured case data
-    OpenAIExtract-->>Worker: Structured summary, category, municipalities
+    Worker->>TavilySearch: Discover candidate reporting
+    TavilySearch-->>Worker: URLs, titles, snippets
+    Worker->>TavilyExtract: Extract article content
+    TavilyExtract-->>Worker: Clean page text
     Worker->>Worker: Classify municipality, category, summary
     alt Trusted and high-confidence
         Worker->>DB: Auto-publish article and linked case
@@ -56,9 +56,9 @@ sequenceDiagram
 1. User opens the app and requests map data
 2. Frontend calls the API
 3. API returns only approved cases from the database
-4. Worker discovers candidate reporting with OpenAI web search
-5. The worker fetches article content from queued URLs
-6. OpenAI extracts municipality/category/summary data from cleaned article text
+4. Worker discovers candidate reporting from Tavily Search
+5. Tavily Extract retrieves article content for queued URLs
+6. The worker applies municipality/category extraction and summary heuristics
 7. Trusted, high-confidence records auto-publish
 8. Uncertain or sensitive records go to the review queue
 9. Admin reviews and approves or rejects queued items

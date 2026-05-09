@@ -12,31 +12,25 @@ class WorkerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = f"sqlite:///{REPO_ROOT / 'backend' / 'coastal_watch.db'}"
-    openai_api_key: str | None = None
+    tavily_api_key: str | None = None
     worker_user_agent: str = "PuertoRicoCoastalWatchWorker/0.1"
     worker_log_level: str = "INFO"
-    search_model_name: str = "gpt-5.4"
-    extraction_model_name: str = "gpt-5.4-mini"
-    openai_search_retry_attempts: int = 3
-    openai_extraction_retry_attempts: int = 3
-    fetch_retry_attempts: int = 3
+    extraction_model_name: str = "heuristic-v1"
+    tavily_search_retry_attempts: int = 3
+    tavily_extract_retry_attempts: int = 3
     case_link_candidate_limit: int = 8
     case_link_min_similarity: float = 0.34
     discovery_queries: list[str] = [
         "bloquean acceso a la playa Puerto Rico",
+        "acceso a la playa bloqueado Puerto Rico",
         "porton o verja bloquea acceso a la playa Puerto Rico",
         "servidumbre de acceso a la playa bloqueada Puerto Rico",
         "cobran entrada para acceso a la playa Puerto Rico",
         "privatizacion de acceso a la playa Puerto Rico",
-        "construccion ilegal en area protegida Puerto Rico",
-        "proyecto de construccion en reserva natural Puerto Rico",
-        "condominio o hotel en zona costera protegida Puerto Rico",
-        "relleno de humedal por construccion Puerto Rico",
-        "tala de manglar por construccion Puerto Rico",
-        "construccion en dunas o manglares Puerto Rico",
-        "proyecto en zona maritimo terrestre Puerto Rico acceso publico",
-        "querella por construccion en area protegida Puerto Rico",
-        "desarrollo turistico en playa virgen Puerto Rico",
+        "camino a la playa cerrado Puerto Rico",
+        "vecinos denuncian acceso a la playa Puerto Rico",
+        "controversia por acceso a la playa Puerto Rico",
+        "querella por acceso a la playa Puerto Rico",
     ]
     discovery_priority_municipalities: list[str] = [
         "Aguada",
@@ -81,31 +75,54 @@ class WorkerSettings(BaseSettings):
         "Vieques",
         "Yabucoa",
     ]
-    discovery_priority_batch_size: int = 5
+    discovery_priority_batch_size: int = 3
     discovery_priority_batch_offset: int = 0
     discovery_access_query_templates: list[str] = [
         "{municipality} bloquean acceso playa",
         "{municipality} acceso playa bloqueado",
         "{municipality} servidumbre acceso playa bloqueada",
         "{municipality} cobran entrada acceso playa",
+        "{municipality} cobran estacionamiento acceso playa",
         "{municipality} porton acceso playa",
         "{municipality} verja acceso playa",
         "{municipality} camino acceso playa cerrado",
+        "{municipality} limitar acceso playa",
         "{municipality} privatizacion acceso playa",
+        "{municipality} residentes denuncian acceso playa",
     ]
     discovery_development_query_templates: list[str] = [
         "{municipality} construccion ilegal area protegida",
         "{municipality} proyecto construccion playa protegida",
-        "{municipality} proyecto reserva natural construccion",
-        "{municipality} hotel condominio costa protegida",
         "{municipality} manglar construccion",
         "{municipality} humedal relleno",
-        "{municipality} dunas construccion",
         "{municipality} zona maritimo terrestre construccion",
     ]
-    discovery_domains: list[str] = []
-    discovery_exclude_domains: list[str] = []
-    discovery_languages: list[str] = ["en", "es"]
+    discovery_domains: list[str] = [
+        "elnuevodia.com",
+        "endi.com",
+        "primerahora.com",
+        "noticel.com",
+        "periodismoinvestigativo.com",
+        "dialogo.upr.edu",
+        "metro.pr",
+        "telemundopr.com",
+        "wapa.tv",
+        "drna.pr.gov",
+        "jp.pr.gov",
+        "ogpe.pr.gov",
+    ]
+    discovery_exclude_domains: list[str] = [
+        "facebook.com",
+        "instagram.com",
+        "x.com",
+        "twitter.com",
+        "youtube.com",
+        "tiktok.com",
+        "cleantechnica.com",
+        "skift.com",
+        "cbsnews.com",
+    ]
+    discovery_languages: list[str] = ["es"]
     discovery_coastal_keywords: list[str] = [
         "playa",
         "playas",
@@ -229,9 +246,12 @@ class WorkerSettings(BaseSettings):
         "educación ambiental",
     ]
     search_topic: str = "news"
-    search_time_range: str = "year"
+    search_depth: str = "basic"
+    search_time_range: str = "month"
     discovery_include_raw_content: bool = False
-    fetch_timeout: float | None = 20.0
+    tavily_extract_depth: str = "basic"
+    tavily_extract_format: str = "text"
+    tavily_extract_timeout: float | None = 20.0
     auto_publish_trusted_publishers: list[str] = [
         "elnuevodia.com",
         "endi.com",

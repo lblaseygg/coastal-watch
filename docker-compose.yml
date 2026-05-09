@@ -49,10 +49,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@db:5432/coastal_watch
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY must be set}
-      SEARCH_MODEL_NAME: ${SEARCH_MODEL_NAME:-gpt-5.4}
-      EXTRACTION_MODEL_NAME: ${EXTRACTION_MODEL_NAME:-gpt-5.4-mini}
-      FETCH_TIMEOUT: ${FETCH_TIMEOUT:-20}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
     command: ["python", "-m", "worker.cli", "run-once", "--limit", "10"]
 
 volumes:
