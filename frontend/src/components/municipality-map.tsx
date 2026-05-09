@@ -318,16 +318,16 @@ function MunicipalityMap({
         <div className="map-legend-items">
           <div className="map-legend-item" tabIndex={0}>
             <span className="map-legend-swatch map-legend-swatch-unique" />
-            <span>1 local case</span>
+            <span>Local only</span>
             <span className="map-legend-hover-copy">
-              One reported case linked only to this municipality.
+              This municipality is linked only to cases that stay within that municipality.
             </span>
           </div>
           <div className="map-legend-item" tabIndex={0}>
             <span className="map-legend-swatch map-legend-swatch-shared" />
-            <span>Shared case</span>
+            <span>Shared</span>
             <span className="map-legend-hover-copy">
-              A reported case shared across multiple municipalities.
+              This municipality is linked only to cases shared across multiple municipalities.
             </span>
           </div>
           <div className="map-legend-item" tabIndex={0}>
