@@ -183,10 +183,39 @@ select {
 
 .hero-nav {
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.hero-nav-menu {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 14px;
+}
+
+.hero-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink-strong);
+  box-shadow: var(--shadow);
+}
+
+.hero-nav-toggle-line {
+  width: 16px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 999px;
 }
 
 .hero-nav-link {
@@ -1371,6 +1400,12 @@ select {
   padding-top: 8px;
 }
 
+.detail-hero {
+  display: grid;
+  gap: 10px;
+  max-width: 54rem;
+}
+
 .detail-back-link {
   width: fit-content;
   padding: 0;
@@ -1395,6 +1430,14 @@ select {
   max-width: 16ch;
   line-height: 0.98;
   letter-spacing: -0.055em;
+}
+
+.detail-intro {
+  margin: 0;
+  max-width: 46rem;
+  font-size: 1.02rem;
+  line-height: 1.9;
+  color: var(--muted);
 }
 
 .detail-meta-row {
@@ -1430,19 +1473,152 @@ select {
   letter-spacing: -0.01em;
 }
 
+.detail-section {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-section-head {
+  display: grid;
+  gap: 8px;
+  max-width: 42rem;
+}
+
+.detail-section-copy {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.detail-context-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.detail-context-card {
+  display: grid;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.detail-context-label,
+.detail-sidecard-kicker {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.detail-context-copy,
+.detail-sidecard-copy {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.detail-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.detail-timeline-item {
+  display: block;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+
+.detail-timeline-item:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.detail-timeline-content {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.detail-timeline-title {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.55;
+  color: var(--ink-strong);
+}
+
+.detail-timeline-publisher {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.detail-timeline-link {
+  width: fit-content;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  text-decoration: none;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.detail-timeline-link:hover {
+  color: var(--tide);
+  transform: translateX(2px);
+}
+
 .detail-sources {
   position: relative;
+  display: grid;
+  gap: 18px;
 }
 
-.detail-source-link {
-  display: block;
+.detail-sidecard {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
-  padding-top: 16px;
-  transition: transform 160ms ease, color 160ms ease;
 }
 
-.detail-source-link:hover {
-  transform: translateX(2px);
+.detail-fact-list {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-fact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.detail-fact-row strong {
+  color: var(--ink-strong);
+  font-weight: 600;
+  text-align: right;
+}
+
+.detail-sidecard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .legal-page-shell {
@@ -1778,7 +1954,92 @@ select {
   }
 
   .hero-nav {
-    justify-content: flex-start;
+    position: relative;
+    justify-content: flex-end;
+  }
+
+  .hero-nav-toggle {
+    display: inline-flex;
+  }
+
+  .hero-nav-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 12;
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+
+  .hero-nav.is-open .hero-nav-menu {
+    display: flex;
+  }
+
+  .hero-nav-link {
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+
+  .hero-nav-link::after {
+    display: none;
+  }
+
+  .hero-nav-link:hover,
+  .hero-nav-link.is-active {
+    background: var(--soft);
+  }
+
+  .municipality-svg-shell {
+    height: 560px;
+  }
+
+  .map-legend {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    min-width: 0;
+    padding: 10px 12px 12px;
+    border-radius: 18px;
+  }
+
+  .map-legend-title {
+    margin-bottom: 10px;
+    font-size: 0.68rem;
+  }
+
+  .map-legend-items {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .map-legend-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.58);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .map-legend-swatch {
+    width: 12px;
+    height: 12px;
+  }
+
+  .map-legend-hover-copy {
+    display: none;
   }
 
   .site-footer {
@@ -1802,6 +2063,14 @@ select {
     font-size: 1.6rem;
   }
 
+  .detail-fact-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-fact-row strong {
+    text-align: left;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1822,6 +2091,10 @@ select {
   .news-page-hero {
     grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.72fr);
     align-items: end;
+  }
+
+  .detail-context-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .legal-page-grid {

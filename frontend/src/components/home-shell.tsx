@@ -214,7 +214,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
       <div className="ambient-orb ambient-orb-right" />
 
       <div className="relative mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="hero-panel overflow-hidden py-4 md:py-5">
+        <header className="hero-panel py-4 md:py-5">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-6">
               <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
@@ -296,16 +296,17 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
                       {municipalityName}
                     </span>
                   ))}
-                  {item.municipality_names.length === 0 ? (
-                    <span className="news-preview-tag">Latest reporting only</span>
-                  ) : null}
                   {item.category ? <span className="news-preview-tag">{item.category.replaceAll("_", " ")}</span> : null}
                 </div>
                 {item.linked_case_slugs[0] ? (
                   <Link className="news-preview-link" href={`/cases/${item.linked_case_slugs[0]}`}>
                     Read linked case
                   </Link>
-                ) : null}
+                ) : (
+                  <a className="news-preview-link" href={item.url} rel="noreferrer" target="_blank">
+                    Read reporting
+                  </a>
+                )}
               </article>
             ))}
           </div>

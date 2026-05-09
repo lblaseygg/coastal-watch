@@ -49,7 +49,7 @@ export default async function ManualCaseEditPage({
     <main className="page-shell">
       <AdminScrollRestoration />
       <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
-        <header className="hero-panel overflow-hidden py-4 md:py-5">
+        <header className="hero-panel py-4 md:py-5">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-6">
               <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--muted-strong)]">
