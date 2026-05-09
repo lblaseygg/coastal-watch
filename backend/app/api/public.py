@@ -11,6 +11,7 @@ from app.schemas import PublicCaseSummary, PublicNewsItem, PublicSource, success
 
 
 router = APIRouter(tags=["public"])
+NEWS_EXCERPT_LIMIT = 280
 
 
 def case_municipality_ids(current_case: Case) -> list[str]:
@@ -41,14 +42,24 @@ def serialize_case(current_case: Case) -> dict:
     ).model_dump(mode="json")
 
 
+def build_news_excerpt(article: Article) -> str:
+    normalized = " ".join((article.cleaned_text or "").strip().replace("\n", " ").split())
+    if len(normalized) <= NEWS_EXCERPT_LIMIT:
+        return normalized
+
+    clipped = normalized[: NEWS_EXCERPT_LIMIT - 3].rstrip()
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0]
+    return f"{clipped}..."
+
+
 def serialize_news_item(article: Article, municipality_names_by_id: dict[str, str]) -> dict:
     approved_cases = sorted(
         [linked_case for linked_case in article.cases if linked_case.publication_status == "approved"],
         key=lambda linked_case: linked_case.last_updated_at,
         reverse=True,
     )
-    excerpt = (article.cleaned_text or "").strip().replace("\n", " ")
-    excerpt = " ".join(excerpt.split())[:280]
+    excerpt = build_news_excerpt(article)
 
     municipality_ids: list[str] = []
     municipality_names: list[str] = []

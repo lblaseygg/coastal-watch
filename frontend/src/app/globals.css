@@ -804,9 +804,13 @@ select {
 .news-page-card-copy {
   margin: 0;
   max-width: 42rem;
+  display: -webkit-box;
+  overflow: hidden;
   font-size: 0.96rem;
   line-height: 1.8;
   color: var(--muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .news-preview-tags {
