@@ -231,7 +231,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
                 </h1>
                 <p className="mt-5 max-w-[46rem] text-[1rem] leading-8 text-[var(--muted)] md:text-[1.18rem] md:leading-9">
                   Puerto Rico’s coasts belong to the public. This project documents and maps reported cases of blocked beach access, 
-                  illegal construction, and development in protected coastal areas across the island. 
+                  illegal construction, and development in protected areas across the island. 
                 </p>
               </div>
 
