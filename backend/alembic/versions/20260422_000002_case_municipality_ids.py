@@ -6,6 +6,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 revision = "20260422_000002"
@@ -15,9 +16,13 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("cases", sa.Column("municipality_ids", sa.JSON(), nullable=True))
-
     connection = op.get_bind()
+    inspector = inspect(connection)
+    existing_columns = {column["name"] for column in inspector.get_columns("cases")}
+
+    if "municipality_ids" not in existing_columns:
+        op.add_column("cases", sa.Column("municipality_ids", sa.JSON(), nullable=True))
+
     rows = connection.execute(sa.text("SELECT id, municipality_id FROM cases")).mappings().all()
     for row in rows:
         connection.execute(
@@ -28,7 +33,11 @@ def upgrade() -> None:
             },
         )
 
-    op.alter_column("cases", "municipality_ids", nullable=False)
+    if connection.dialect.name == "sqlite":
+        with op.batch_alter_table("cases") as batch_op:
+            batch_op.alter_column("municipality_ids", existing_type=sa.JSON(), nullable=False)
+    else:
+        op.alter_column("cases", "municipality_ids", existing_type=sa.JSON(), nullable=False)
 
 
 def downgrade() -> None:

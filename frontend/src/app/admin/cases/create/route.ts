@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 303);
   }
 
-  if (!title || !summary || !sourceUrl || !sourceTitle || municipalityIds.length === 0 || !firstReportedAt) {
+  if (!title || !summary || !sourceUrl || !sourceTitle || !firstReportedAt) {
     redirectUrl.searchParams.set("error", "missing_manual_case_fields");
     return NextResponse.redirect(redirectUrl, 303);
   }

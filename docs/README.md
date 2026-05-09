@@ -6,3 +6,4 @@ This directory contains the documentation for the Coastal Watch project. Inside
 - [System Overview](./architecture/system-overview.md)
 - [Components](./architecture/components.md)
 - [AWS Architecture](./architecture/aws.md)
+- [AWS Portfolio Diagram](./architecture/aws-portfolio-diagram.md)

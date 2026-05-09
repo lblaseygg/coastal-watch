@@ -220,6 +220,7 @@ def serialize_article_detail(article: Article) -> dict[str, Any]:
         accessed_at=article.accessed_at,
         language=article.language,
         fetch_status=article.fetch_status,
+        publication_status=article.publication_status,
         linked_case_ids=article.linked_case_ids,
         cleaned_text=article.cleaned_text,
     ).model_dump(mode="json")
@@ -569,9 +570,6 @@ def create_manual_case(
     db: Session = Depends(get_db),
     admin: AdminIdentity = Depends(require_admin),
 ) -> dict[str, Any]:
-    municipality_ids, municipality_by_id = resolve_municipalities(db, payload.municipality_ids)
-    municipality = municipality_by_id[municipality_ids[0]]
-
     last_reported_at = payload.last_reported_at or payload.first_reported_at
 
     if last_reported_at < payload.first_reported_at:
@@ -597,6 +595,7 @@ def create_manual_case(
             accessed_at=now,
             language="es",
             fetch_status="cleaned",
+            publication_status="approved",
             content_hash=content_hash,
             cleaned_text=payload.summary.strip(),
             linked_case_ids=[],
@@ -607,8 +606,24 @@ def create_manual_case(
         article.published_at = payload.first_reported_at
         article.accessed_at = now
         article.fetch_status = "cleaned"
+        article.publication_status = "approved"
         article.content_hash = content_hash
         article.cleaned_text = payload.summary.strip()
+
+    if not payload.municipality_ids:
+        db.add(article)
+        db.commit()
+        db.refresh(article)
+
+        return success_payload(
+            {
+                "case": None,
+                "article": serialize_article_detail(article),
+            }
+        )
+
+    municipality_ids, municipality_by_id = resolve_municipalities(db, payload.municipality_ids)
+    municipality = municipality_by_id[municipality_ids[0]]
 
     manual_reason_codes = ["manual_admin_entry"]
     case_id = f"case_{uuid4().hex[:10]}"
@@ -737,6 +752,7 @@ def update_manual_case(
             accessed_at=now,
             language="es",
             fetch_status="cleaned",
+            publication_status="approved",
             content_hash=content_hash,
             cleaned_text=payload.summary.strip(),
             linked_case_ids=[current_case.id],
@@ -757,6 +773,7 @@ def update_manual_case(
         article.published_at = payload.first_reported_at
         article.accessed_at = now
         article.fetch_status = "cleaned"
+        article.publication_status = "approved"
         article.content_hash = content_hash
         article.cleaned_text = payload.summary.strip()
         if current_case.id not in article.linked_case_ids:

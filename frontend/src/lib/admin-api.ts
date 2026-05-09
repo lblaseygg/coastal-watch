@@ -70,6 +70,7 @@ export type AdminReviewItemDetailRecord = AdminReviewItemSummaryRecord & {
     accessed_at: string;
     language: string;
     fetch_status: string;
+    publication_status: string;
     linked_case_ids: string[];
     cleaned_text: string;
   } | null;
@@ -252,7 +253,7 @@ export async function createAdminManualCase(
   actor: string,
   payload: AdminManualCasePayload
 ): Promise<{
-  case: CaseRecord;
+  case: CaseRecord | null;
   article: AdminReviewItemDetailRecord["article"];
 }> {
   return fetchAdminApi(`/api/admin/cases/manual`, {

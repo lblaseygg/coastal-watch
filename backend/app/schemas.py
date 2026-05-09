@@ -138,6 +138,7 @@ class AdminArticleDetail(BaseModel):
     accessed_at: datetime
     language: str
     fetch_status: str
+    publication_status: str
     linked_case_ids: list[str]
     cleaned_text: str
 
@@ -161,7 +162,7 @@ class ManualCaseCreateInput(BaseModel):
     summary: str
     source_url: str
     source_title: str
-    municipality_ids: list[str]
+    municipality_ids: list[str] = Field(default_factory=list)
     first_reported_at: datetime
     last_reported_at: datetime | None = None
     category: str = "development"

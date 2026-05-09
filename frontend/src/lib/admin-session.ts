@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   GENERATED_ADMIN_API_TOKEN,
   GENERATED_ADMIN_SESSION_SECRET
@@ -20,6 +22,11 @@ export type AdminSession = {
   expires_at: number;
 };
 
+let cachedRootEnvValues: {
+  ADMIN_API_TOKEN?: string;
+  ADMIN_SESSION_SECRET?: string;
+} | null = null;
+
 function toBase64Url(value: string): string {
   return Buffer.from(value, "utf-8").toString("base64url");
 }
@@ -28,10 +35,58 @@ function fromBase64Url(value: string): string {
   return Buffer.from(value, "base64url").toString("utf-8");
 }
 
+function readRootEnvValues(): {
+  ADMIN_API_TOKEN?: string;
+  ADMIN_SESSION_SECRET?: string;
+} {
+  if (cachedRootEnvValues) {
+    return cachedRootEnvValues;
+  }
+
+  const envPath = resolve(process.cwd(), "..", ".env");
+  if (!existsSync(envPath)) {
+    cachedRootEnvValues = {};
+    return cachedRootEnvValues;
+  }
+
+  const values: {
+    ADMIN_API_TOKEN?: string;
+    ADMIN_SESSION_SECRET?: string;
+  } = {};
+
+  for (const line of readFileSync(envPath, "utf-8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const rawValue = trimmed.slice(separatorIndex + 1).trim();
+    const value = rawValue.replace(/^['"]|['"]$/g, "");
+
+    if (key === "ADMIN_API_TOKEN") {
+      values.ADMIN_API_TOKEN = value;
+    } else if (key === "ADMIN_SESSION_SECRET") {
+      values.ADMIN_SESSION_SECRET = value;
+    }
+  }
+
+  cachedRootEnvValues = values;
+  return values;
+}
+
 function getAdminSessionSecret(): string | null {
+  const rootEnvValues = readRootEnvValues();
   const configuredSecret =
     process.env.ADMIN_SESSION_SECRET ??
+    rootEnvValues.ADMIN_SESSION_SECRET ??
     process.env.ADMIN_API_TOKEN ??
+    rootEnvValues.ADMIN_API_TOKEN ??
     GENERATED_ADMIN_SESSION_SECRET ??
     GENERATED_ADMIN_API_TOKEN;
 
@@ -44,7 +99,11 @@ type SignedPayload = {
 };
 
 export function getServerAdminApiToken(): string | null {
-  const configuredToken = process.env.ADMIN_API_TOKEN ?? GENERATED_ADMIN_API_TOKEN;
+  const rootEnvValues = readRootEnvValues();
+  const configuredToken =
+    process.env.ADMIN_API_TOKEN ??
+    rootEnvValues.ADMIN_API_TOKEN ??
+    GENERATED_ADMIN_API_TOKEN;
   return configuredToken || null;
 }
 

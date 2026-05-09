@@ -269,10 +269,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   Manual case entry
                 </p>
                 <h2 className="mt-2 text-[1.25rem] font-semibold leading-tight text-[var(--ink)]">
-                  Create a case directly from reporting you want to track.
+                  Create a case or reporting entry directly from a source you want to track.
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-                  Add a case manually only when the automated pipeline missed it or when you want to publish a curated entry.
+                  Add a case manually when the automated pipeline missed it, or leave municipalities blank to publish a latest-reporting entry without placing it on the map.
                 </p>
               </div>
               <span className="admin-collapsible-trigger">Create manual case</span>
@@ -324,7 +324,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <fieldset className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-white p-4">
                   <legend className="sr-only">Municipalities</legend>
                   <p className="text-sm leading-6 text-[var(--muted)]">
-                    Select every municipality this manual case should appear in on the map.
+                    Select every municipality this entry should appear in on the map. Leave all unchecked to publish it only in Latest reporting.
                   </p>
                   <div className="grid gap-2 md:grid-cols-2">
                     {municipalities.map((municipality) => (
@@ -346,7 +346,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     className="rounded-[10px] border border-[var(--ink)] bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
                     type="submit"
                   >
-                    Create case
+                    Create entry
                   </button>
                   <AdminCollapseButton />
                 </div>

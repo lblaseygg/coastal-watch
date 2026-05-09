@@ -212,9 +212,12 @@ def list_news(
     articles = db.scalars(
         select(Article)
         .options(selectinload(Article.cases).selectinload(Case.municipality))
-        .join(Article.cases)
-        .where(Case.publication_status == "approved")
-        .group_by(Article.id)
+        .where(
+            or_(
+                Article.publication_status == "approved",
+                Article.cases.any(Case.publication_status == "approved"),
+            )
+        )
         .order_by(Article.published_at.desc(), Article.created_at.desc())
     ).all()
     filtered_articles = []

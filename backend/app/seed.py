@@ -52,6 +52,7 @@ def seed_articles(session) -> None:
                 accessed_at=parse_timestamp(item["accessed_at"]),
                 language=item["language"],
                 fetch_status=item["fetch_status"],
+                publication_status=item.get("publication_status", "draft"),
                 content_hash=item["content_hash"],
                 cleaned_text=item["cleaned_text"],
                 linked_case_ids=item["linked_case_ids"],

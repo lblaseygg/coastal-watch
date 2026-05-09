@@ -296,6 +296,9 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
                       {municipalityName}
                     </span>
                   ))}
+                  {item.municipality_names.length === 0 ? (
+                    <span className="news-preview-tag">Latest reporting only</span>
+                  ) : null}
                   {item.category ? <span className="news-preview-tag">{item.category.replaceAll("_", " ")}</span> : null}
                 </div>
                 {item.linked_case_slugs[0] ? (

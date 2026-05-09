@@ -35,8 +35,9 @@ export default async function NewsPage() {
             <h1 className="news-page-title">Verified reporting surfaced automatically.</h1>
             <p className="news-page-copy">
               This feed gathers trusted-source articles that passed the current auto-publication
-              rules and are already linked to public case records. It is designed to let readers
-              scan new reporting without losing the municipality and case context shown on the map.
+              rules, including reporting tied to public case records and standalone reporting entries
+              that are not placed on the map. It is designed to let readers scan new reporting
+              without losing the municipality and case context shown on the map.
             </p>
           </div>
 
@@ -44,8 +45,9 @@ export default async function NewsPage() {
             <p className="news-page-aside-heading">What this feed prioritizes</p>
             <ul className="news-page-list">
               <li>verified Puerto Rico reporting tied to public case records</li>
+              <li>standalone reporting that deserves visibility even without a map placement</li>
               <li>construction, access, and protected-land pressure signals</li>
-              <li>source-backed summaries grouped back into the municipal map view</li>
+              <li>source-backed summaries grouped back into the municipal map view when applicable</li>
             </ul>
           </aside>
         </section>
@@ -55,7 +57,8 @@ export default async function NewsPage() {
             <p className="legal-page-section-kicker">Public reporting feed</p>
             <p className="news-page-section-copy">
               These are the articles currently visible on the public site. Each item is linked to
-              at least one approved case and municipality.
+              an approved case when available, but standalone reporting can also appear here even if
+              it is not mapped to a municipality.
             </p>
           </div>
 
@@ -84,6 +87,9 @@ export default async function NewsPage() {
                     {municipalityName}
                   </span>
                 ))}
+                {item.municipality_names.length === 0 ? (
+                  <span className="news-preview-tag">Latest reporting only</span>
+                ) : null}
                 {item.category ? <span className="news-preview-tag">{item.category.replaceAll("_", " ")}</span> : null}
               </div>
               {item.linked_case_slugs[0] ? (

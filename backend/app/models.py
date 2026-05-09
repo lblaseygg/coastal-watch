@@ -76,6 +76,7 @@ class Article(Base):
     accessed_at: Mapped[datetime]
     language: Mapped[str] = mapped_column(String(16))
     fetch_status: Mapped[str] = mapped_column(String(50))
+    publication_status: Mapped[str] = mapped_column(String(50), default="draft")
     content_hash: Mapped[str] = mapped_column(String(255))
     cleaned_text: Mapped[str] = mapped_column(Text)
     linked_case_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
