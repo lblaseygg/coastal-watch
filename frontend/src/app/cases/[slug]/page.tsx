@@ -208,7 +208,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
                   unresolved queue items stay out of the public interface.
                 </p>
                 <div className="detail-sidecard-actions">
-                  <Link className="toolbar-button" href="/news">
+                  <Link className="section-link-button" href="/news">
                     View all reporting
                   </Link>
                 </div>

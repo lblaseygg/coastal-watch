@@ -278,7 +278,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
               <p className="legal-snapshot-kicker">Latest reporting</p>
               <h2 className="news-preview-title">Automatically published coverage from trusted Puerto Rico sources.</h2>
             </div>
-            <Link className="toolbar-button" href="/news">
+            <Link className="section-link-button" href="/news">
               View all reporting
             </Link>
           </div>
@@ -355,7 +355,7 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
               The public app shows only the legal context needed to understand cases. Full citations
               and explanatory material live in a dedicated reference page.
             </p>
-            <Link className="toolbar-button" href="/legal-framework">
+            <Link className="section-link-button" href="/legal-framework">
               Read legal framework
             </Link>
           </div>

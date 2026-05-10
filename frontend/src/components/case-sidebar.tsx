@@ -24,20 +24,20 @@ export default function CaseSidebar({
       <div className="case-drawer-head px-5 py-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted-strong)]">
-              Filed in municipality
+            <p className="case-drawer-kicker">
+              municipality
             </p>
-            <h2 className="mt-3 text-[1.4rem] font-semibold leading-tight tracking-[-0.035em] text-[var(--ink-strong)]">
+            <h2 className="case-drawer-title">
               {activeMunicipality?.name ?? "Selected municipality"}
             </h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+            <p className="case-drawer-copy">
               {cases.length} {cases.length === 1 ? "case" : "cases"}
               {selectedMunicipalityId ? " in the current selection" : ""}
             </p>
           </div>
 
-          <button className="toolbar-button" onClick={onClose} type="button">
-            Close
+          <button aria-label="Close municipality panel" className="case-drawer-close" onClick={onClose} type="button">
+            <span aria-hidden="true">×</span>
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function CaseSidebar({
           <div className="px-2 py-5">
             <p className="text-base font-semibold text-[var(--ink)]">No matching cases</p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              This municipality does not have any cases that match the current filters.
+              This municipality does not have any cases reported at the moment. Try selecting a different municipality.
             </p>
           </div>
         )}
