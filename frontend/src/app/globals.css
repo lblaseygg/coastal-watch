@@ -153,28 +153,41 @@ select {
   border-top: 1px solid var(--line);
 }
 
+.home-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
 .metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
   position: relative;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: 0 0 0 12px;
+  padding: 0;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  border-left: 1px solid var(--line);
 }
 
 .metric-label {
   margin: 0;
-  font-size: 0.68rem;
+  max-width: 100%;
+  font-size: 0.70rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1.35;
+  text-wrap: balance;
   color: var(--muted-strong);
 }
 
 .metric-value {
-  margin: 12px 0 0;
+  margin: 0;
   font-size: 2.2rem;
   font-weight: 600;
   letter-spacing: -0.075em;
@@ -2060,7 +2073,11 @@ select {
   }
 
   .metric-card {
-    padding: 0 0 0 10px;
+    padding: 0;
+  }
+
+  .home-metric-grid {
+    gap: 12px;
   }
 
   .metric-value {

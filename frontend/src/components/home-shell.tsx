@@ -126,14 +126,21 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
   const selectedMunicipality = drawerMunicipalityId
     ? municipalityById.get(drawerMunicipalityId) ?? null
     : null;
-  const activeCaseCount = useMemo(
-    () => approvedCases.filter((currentCase) => currentCase.status === "active").length,
-    [approvedCases]
-  );
-  const monitoredCaseCount = useMemo(
-    () => approvedCases.filter((currentCase) => currentCase.status === "monitoring").length,
-    [approvedCases]
-  );
+  const trackedCaseCount = approvedCases.length;
+  const affectedMunicipalityCount = useMemo(() => {
+    const municipalityIds = new Set<string>();
+
+    for (const currentCase of approvedCases) {
+      for (const municipalityId of currentCase.municipality_ids.length > 0
+        ? currentCase.municipality_ids
+        : [currentCase.municipality_id]) {
+        municipalityIds.add(municipalityId);
+      }
+    }
+
+    return municipalityIds.size;
+  }, [approvedCases]);
+  const latestReportingCount = latestNews.length;
 
   const closeDrawer = () => {
     setSelectedMunicipalityId(null);
@@ -227,26 +234,25 @@ export default function HomeShell({ approvedCases, latestNews, municipalities, s
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
               <div className="max-w-4xl">
                 <h1 className="max-w-4xl text-[2.5rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[var(--ink-strong)] md:text-[4.85rem]">
-                  SE ESTÁN QUEDANDO CON LA ISLA
+                  DE AQUÍ NADIE NOS SACA
                 </h1>
                 <p className="mt-5 max-w-[46rem] text-[1rem] leading-8 text-[var(--muted)] md:text-[1.18rem] md:leading-9">
-                  Puerto Rico’s coasts belong to the public. This project documents and maps reported cases of blocked beach access, 
-                  illegal construction, and development in protected areas across the island. 
+                  Puerto Rico’s coasts belong to the public. This project documents and maps reported cases of blocked beach access, illegal construction, and development in protected coastal areas across the island. It turns scattered reporting into a public record that helps people see where coastal pressure is happening, what type of issue is being reported, and how those cases evolve over time. Through a map, case pages, and a latest reporting feed, the platform is designed to make coastal issues more visible, easier to follow, and easier to understand.
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="home-metric-grid">
                 <div className="metric-card">
-                  <p className="metric-label">Visible</p>
-                  <p className="metric-value">{filteredCases.length}</p>
+                  <p className="metric-label">Cases</p>
+                  <p className="metric-value">{trackedCaseCount}</p>
                 </div>
                 <div className="metric-card">
-                  <p className="metric-label">Active</p>
-                  <p className="metric-value">{activeCaseCount}</p>
+                  <p className="metric-label">Municipalities</p>
+                  <p className="metric-value">{affectedMunicipalityCount}</p>
                 </div>
                 <div className="metric-card">
-                  <p className="metric-label">Monitoring</p>
-                  <p className="metric-value">{monitoredCaseCount}</p>
+                  <p className="metric-label">Latest</p>
+                  <p className="metric-value">{latestReportingCount}</p>
                 </div>
               </div>
             </div>
