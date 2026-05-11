@@ -2,6 +2,9 @@
 
 Puerto Rico Coastal Watch is a civic intelligence platform for tracking blocked beach access, development in protected coastal lands, and related public-interest issues across Puerto Rico.
 
+Live app:
+- `https://main.dibozvb639fjz.amplifyapp.com`
+
 The repo currently includes:
 - a public frontend in Next.js
 - a backend API in FastAPI
@@ -160,6 +163,7 @@ The project can currently run in a production-friendly manual mode without the w
 That means:
 - frontend, API, and database are live
 - admin users can create, edit, review, and publish content manually
+- admin users can publish both mapped municipal cases and standalone reporting entries for the public news feed
 - worker scheduling can stay disabled until external API credits or automation needs return
 
 This is the current recommended deployment mode.
@@ -193,6 +197,9 @@ This is the current recommended deployment mode.
 1. The frontend loads municipalities and approved cases from the API.
 2. Users browse the Puerto Rico map and related case/news views.
 3. Case detail pages show summaries and linked sources.
+4. The public news feed can show both:
+   - reporting linked to approved cases
+   - standalone approved reporting entries that are not placed on the map
 
 ### Backend
 The API exposes public endpoints for:
@@ -224,7 +231,7 @@ python -m app.seed
 
 ## AWS Deployment Direction
 
-The current AWS target is:
+The current AWS deployment is:
 - frontend on AWS Amplify
 - API on ECS Fargate behind an Application Load Balancer
 - PostgreSQL on Amazon RDS
@@ -234,7 +241,6 @@ The current AWS target is:
 
 See:
 - [AWS Architecture](/Users/blasey/Developer/coastal-watch/docs/architecture/aws.md)
-- [AWS Portfolio Diagram](/Users/blasey/Developer/coastal-watch/docs/architecture/aws-portfolio-diagram.md)
 
 Production startup split:
 - local Docker API startup: `backend/docker-dev-entrypoint.sh`
@@ -248,6 +254,7 @@ Implemented:
 - SVG municipality map
 - municipality case and news views
 - case detail pages
+- standalone public reporting entries outside the map
 - public backend API
 - database models and migrations
 - Docker local stack
@@ -256,9 +263,9 @@ Implemented:
 - CSRF protection for admin mutations
 - heuristic discovery/extraction/routing worker
 - AWS-safe split between API startup and one-off database init
+- deployed Amplify frontend, ECS API service, ALB, and RDS database
 
 Still left:
-- complete the AWS deployment rollout
 - validate production manual-operations mode end-to-end
 - add production monitoring, alerts, and backups
 - reintroduce worker scheduling when external API credits return
@@ -282,6 +289,7 @@ coastal-watch/
 - A fresh local Docker run creates a new local Postgres volume and seeds municipalities from the committed seed files.
 - The frontend currently uses a clean SVG municipality map instead of Leaflet for the main public UI.
 - The worker is available locally, but it is not required for the current production rollout.
+- The current live frontend is available at `https://main.dibozvb639fjz.amplifyapp.com`.
 
 ## License
 
